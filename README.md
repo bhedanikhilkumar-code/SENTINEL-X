@@ -134,14 +134,12 @@ Built with **Next.js 14**, **React 18**, **Tailwind CSS**, and **Cytoscape.js**,
 
 ## ⚡ Quick Start & Deployment
 
-### 🚀 Option 1: One-Click Windows Launchers (Recommended)
-
-| Script | Purpose |
-|---|---|
-| **`run_platform.bat`** | Launches both FastAPI backend (`:8000`) and Next.js frontend (`:3000`) concurrently. |
-| **`docker_run.bat`** | Builds and starts full multi-container Docker environment (`docker-compose up --build`). |
-| **`run_tests.bat`** | Runs the complete automated 7-step Phase 6 verification and rehearsal test suite. |
-| **`push_to_github.bat`** | Synchronizes local commits to your remote GitHub repository with 1 click. |
+### Option 1: One-Click Launchers (Windows)
+- **Launch Full Platform:** Double-click `run_platform.bat`
+- **Deploy/Share Globally via Cloudflare Tunnel:** Double-click `start_cloudflare_tunnel.bat`
+- **Launch via Docker Compose:** Double-click `docker_run.bat` (or run `docker compose up --build`)
+- **Run Automated Rehearsal Suite (All 7 Tests):** Double-click `run_tests.bat`
+- **Push to GitHub:** Double-click `push_to_github.bat`
 
 ---
 
