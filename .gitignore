@@ -1,0 +1,27 @@
+# Node & Next.js
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+*.log
+frontend/*.log
+
+# Python
+__pycache__/
+backend/app/__pycache__/
+backend/app/**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+
+# Database & Sensitive Local Artifacts
+backend/*.db
+backend/*.sqlite3
+*.db
+.env
+.env.local
+.DS_Store
+Thumbs.db
