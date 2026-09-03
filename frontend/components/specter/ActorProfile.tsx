@@ -57,6 +57,32 @@ export default function ActorProfile({
           </select>
         </div>
 
+        {/* Case Selector Tabs with Cyan Left Border Indicator (FIX 7) */}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => onSelectActor("phantom-krypt")}
+            className={`p-2 rounded-lg text-left transition ${
+              actor.id === "phantom-krypt"
+                ? "bg-slate-900 border-l-4 border-l-cyan-400 border border-slate-700 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]"
+                : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <div className="font-bold text-[10.5px]">PHANTOM-KRYPT</div>
+            <div className="text-[9px] text-emerald-400 font-bold">DE-CLOAKED (94.8%)</div>
+          </button>
+          <button
+            onClick={() => onSelectActor("void-locker")}
+            className={`p-2 rounded-lg text-left transition ${
+              actor.id === "void-locker"
+                ? "bg-slate-900 border-l-4 border-l-cyan-400 border border-slate-700 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]"
+                : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <div className="font-bold text-[10.5px]">VOID-LOCKER</div>
+            <div className="text-[9px] text-amber-400 font-bold">TRACKING (61.3%)</div>
+          </button>
+        </div>
+
         {/* Suspect Title & Attribution Confidence Gauge */}
         <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800/90 flex items-center justify-between">
           <div className="space-y-1">

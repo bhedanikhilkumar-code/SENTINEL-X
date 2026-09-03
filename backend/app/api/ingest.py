@@ -77,6 +77,51 @@ def get_document(doc_id: str, db: Session = Depends(get_db)):
                            "confidence": a.extraction_confidence} for a in arts]}
 
 
+class LiveIngestBody(BaseModel):
+    url: str
+    case_id: str | None = None
+    rotate_circuit: bool = True
+    source_type: str = "forum_post"
+
+
+@router.post("/live")
+def live_ingest(body: LiveIngestBody, db: Session = Depends(get_db)):
+    """Module A live path: Tor-collected URL → existing hash→dedup→extract pipeline.
+
+    PRD boundaries preserved:
+    - Egress ONLY via Tor (no direct fallback — collector.py enforces this).
+    - CAPTCHA blocks are queued for human-in-the-loop resolution, audited, never auto-defeated.
+    """
+    from app.modules import collector
+    result = collector.collect(body.url, rotate=body.rotate_circuit)
+    append_audit(db, actor="collector", action="ingest.live_attempt", entity_ids=[body.case_id] if body.case_id else [],
+                 detail=f"url={body.url} status={result['status']} circuit_rotated={result.get('circuit_rotated')}")
+    if not result["ok"]:
+        raise HTTPException(503, result)  # tor_unavailable / fetch_error — structured, actionable
+    if result["status"] == "captcha_blocked":
+        # Human-in-the-loop queue (PRD §3.A): URL parked, analyst resolves via assisted browsing.
+        append_audit(db, actor="collector", action="ingest.captcha_queued", entity_ids=[],
+                     detail=f"Human resolution required for {body.url} — assisted-browsing pane")
+        return {"queued_for_human": True, "url": body.url, **{k: v for k, v in result.items() if k != "raw_text"}}
+
+    ingest = IngestBody(raw_text=result["raw_text"], source_url=body.url,
+                        source_type=body.source_type, case_id=body.case_id,
+                        partial_capture=result["partial_capture"])
+    out = ingest_document(ingest, db)
+    out["collector"] = {k: v for k, v in result.items() if k != "raw_text"}
+    return out
+
+
+@router.get("/collector/status")
+def collector_status():
+    """Ops check for the SOC dashboard: is the isolated collector's Tor up?"""
+    from app.modules import collector
+    return {"tor_socks_up": collector.tor_available(),
+            "socks_port": collector.SOCKS_PORT, "control_port": collector.CONTROL_PORT,
+            "egress_policy": "tor-only, no direct fallback (PRD §4.1)",
+            "header_scrub": sorted(collector._SCRUB_TEMPLATE)}
+
+
 @router.get("/documents")
 def list_documents(case_id: str | None = None, db: Session = Depends(get_db)):
     q = db.query(Document)
