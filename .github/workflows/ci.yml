@@ -1,0 +1,59 @@
+name: SPECTER-TRACE CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  backend-audit:
+    name: Backend 35-Point Cryptographic & Module Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install httpx reportlab
+
+      - name: Run 35-Point Exhaustive Audit
+        run: |
+          cd backend
+          python tests/test_exhaustive_audit.py
+
+      - name: Run Rehearsal Verification Suite
+        run: |
+          cd backend
+          python tests/test_rehearsal_and_dossier.py
+
+  frontend-build:
+    name: Frontend Next.js 14 App Router & WebGL Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package.json
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Verify Production App Router Build & Static Export
+        working-directory: ./frontend
+        run: npm run build
