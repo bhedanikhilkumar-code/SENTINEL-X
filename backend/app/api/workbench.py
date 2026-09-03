@@ -81,3 +81,106 @@ def annotate_node(body: AnnotationBody, db: Session = Depends(get_db)):
                          detail=f"[{body.node_id}] {body.note}")
     return {"status": "ok", "node_id": body.node_id, "note": body.note, "seq": entry.seq}
 
+
+@router.get("/stylometry/analyze")
+def analyze_stylometry(doc_id: str, db: Session = Depends(get_db)):
+    from app.modules.stylometry import (
+        extract_features,
+        detect_multi_author_anomaly,
+        detect_machine_translation,
+        timezone_fit_breakdown,
+        hour_histogram,
+    )
+    doc = db.get(Document, doc_id)
+    if not doc:
+        raise HTTPException(404, "document not found")
+    features = extract_features(doc.raw_text)
+    multi_author = detect_multi_author_anomaly(doc.raw_text)
+    translation = detect_machine_translation(doc.raw_text)
+    # Collect all posts from this author to compute author's diurnal curve
+    author_docs = db.query(Document).filter_by(author_handle=doc.author_handle).all()
+    hist = hour_histogram([d.posted_at for d in author_docs])
+    tz_ranking = timezone_fit_breakdown(hist)
+    return {
+        "doc_id": doc.id,
+        "author": doc.author_handle,
+        "source_type": doc.source_type,
+        "features": features,
+        "multi_author_assessment": multi_author,
+        "translation_assessment": translation,
+        "timezone_ranking": tz_ranking,
+        "hourly_distribution": hist,
+    }
+
+
+class SearchQuery(BaseModel):
+    query: str
+
+
+@router.post("/correlation/search")
+def search_correlation(body: SearchQuery, db: Session = Depends(get_db)):
+    from app.modules.correlation import compute_c_total
+    q = body.query.strip().lower()
+
+    # Synthetic cross-platform database
+    mock_clearnet_db = [
+        {
+            "platform": "GitHub",
+            "handle": "vk_devtools",
+            "name": "Vikas Kumar",
+            "email": "vk.devtools@protonmail.com",
+            "pgp_key_id": "9F3A21C0D4E7B881",
+            "repo": "vk_devtools/packet-sniffer-v2",
+            "signals": [
+                {"signal_type": "pgp_fingerprint_exact", "ci": 0.95, "detail": {"pgp": "9F3A21C0D4E7B881"}},
+                {"signal_type": "handle_match", "ci": 0.40, "detail": {"handle": "vk_devtools"}},
+            ]
+        },
+        {
+            "platform": "Synthetic Breach 2024",
+            "handle": "vk_dev",
+            "email": "vk.devtools@protonmail.com",
+            "ip_origin": "103.21.244.18 (Mumbai, India, Tata Teleservices)",
+            "leaked_pass_hash": "$2b$12$e8wF92kLm9Q1...",
+            "signals": [
+                {"signal_type": "email_in_breach", "ci": 0.65, "detail": {"email": "vk.devtools@protonmail.com"}},
+            ]
+        },
+        {
+            "platform": "Blockchain Intelligence Cluster",
+            "wallet": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            "cluster": "btc_co_spend_4091",
+            "destination": "Binance Deposit Address 0x89f2b8a",
+            "total_extracted_vol": "14.28 BTC",
+            "signals": [
+                {"signal_type": "wallet_clustering", "ci": 0.70, "detail": {"cluster": "btc_co_spend_4091"}},
+                {"signal_type": "wallet_exact_match", "ci": 0.90, "detail": {"wallet": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}},
+            ]
+        }
+    ]
+
+    matches = []
+    collected_signals = []
+    for entry in mock_clearnet_db:
+        entry_str = str(entry).lower()
+        if q in entry_str or not q:
+            matches.append(entry)
+            collected_signals.extend(entry.get("signals", []))
+
+    # Add stylometric signal if searching DarkViper or vk_devtools
+    if "viper" in q or "vk" in q or not q:
+        collected_signals.append({
+            "signal_type": "stylometric",
+            "ci": 0.68,
+            "detail": {"comparison": "DarkViper (Onion) vs vk_devtools (Pastebin)", "s_style": 0.68}
+        })
+
+    confidence = compute_c_total(collected_signals) if collected_signals else {"c_total": 0.0, "breakdown": []}
+    return {
+        "query": body.query,
+        "matched_identities": matches,
+        "signals_evaluated": len(collected_signals),
+        "correlation_result": confidence,
+    }
+
+

@@ -188,3 +188,79 @@ def hour_histogram(posted_dates) -> list[int]:
                 pass  # non-datetime entry — skip rather than crash
     return hist
 
+
+def detect_multi_author_anomaly(text: str) -> dict:
+    """Detect bimodal stylometric distribution indicating shared/multi-operator accounts (PRD 3.C)."""
+    sentences = [s.strip() for s in SENT_SPLIT_RE.split(text) if s.strip()]
+    if len(sentences) < 6:
+        return {"multi_author_flag": False, "reason": "insufficient sentence count for bimodal test"}
+    half = len(sentences) // 2
+    part_a = " ".join(sentences[:half])
+    part_b = " ".join(sentences[half:])
+    fa = extract_features(part_a)
+    fb = extract_features(part_b)
+    if fa.get("error") or fb.get("error"):
+        return {"multi_author_flag": False, "reason": "short split"}
+    js = js_divergence(fa["function_word_dist"], fb["function_word_dist"])
+    sent_diff = abs(fa["mean_sentence_len"] - fb["mean_sentence_len"])
+    is_multi = js > 0.45 or sent_diff > 12.0
+    return {
+        "multi_author_flag": is_multi,
+        "js_divergence_internal": round(js, 4),
+        "sentence_len_delta": round(sent_diff, 2),
+        "assessment": "Bimodal distribution detected: potential shared credentials/multi-operator" if is_multi else "Uniform single-author stylometric distribution"
+    }
+
+
+def detect_machine_translation(text: str) -> dict:
+    """Detect translation residue / automated translator artifacts (PRD 3.C)."""
+    tokens = _tokens(text)
+    if len(tokens) < 20:
+        return {"translation_flag": False, "confidence": 0.0}
+    passive_markers = ["by the", "was done", "has been", "is being", "were made", "which was"]
+    text_lower = text.lower()
+    matches = sum(text_lower.count(m) for m in passive_markers)
+    ratio = matches / max(len(tokens) / 30, 1.0)
+    is_trans = ratio > 1.8
+    return {
+        "translation_flag": is_trans,
+        "passive_density": round(ratio, 3),
+        "detected_markers": [m for m in passive_markers if m in text_lower],
+        "verdict": "Natural English phrasing (non-translated)" if not is_trans else "High passive clausal density: potential MT residue"
+    }
+
+
+def timezone_fit_breakdown(hist: list[int]) -> list[dict]:
+    """Rank candidate real-world timezones against observed 24h UTC activity (PRD 3.C)."""
+    candidates = [
+        {"tz": "UTC+05:30", "region": "India / South Asia (IST)", "offset": 5.5},
+        {"tz": "UTC+03:00", "region": "Moscow / E. Europe (MSK)", "offset": 3.0},
+        {"tz": "UTC+01:00", "region": "Central Europe (CET)", "offset": 1.0},
+        {"tz": "UTC+08:00", "region": "China / Singapore (CST)", "offset": 8.0},
+        {"tz": "UTC-05:00", "region": "US Eastern (EST)", "offset": -5.0},
+    ]
+    total = sum(hist)
+    if total == 0:
+        return [{"tz": c["tz"], "region": c["region"], "overlap_score": 0.2, "status": "No activity data"} for c in candidates]
+    
+    results = []
+    for c in candidates:
+        offset = c["offset"]
+        # Normal active wake hours: 09:00 to 23:00 local time
+        active_hours_utc = []
+        for h in range(24):
+            local_hour = (h + offset) % 24
+            if 9 <= local_hour <= 23:
+                active_hours_utc.append(h)
+        # Sum observed activity inside candidate's daytime
+        day_events = sum(hist[h] for h in active_hours_utc)
+        score = round(day_events / total, 3)
+        results.append({
+            "tz": c["tz"],
+            "region": c["region"],
+            "overlap_score": score,
+            "status": "High Alignment" if score > 0.8 else ("Moderate" if score > 0.5 else "Low Alignment")
+        })
+    return sorted(results, key=lambda x: x["overlap_score"], reverse=True)
+
+
