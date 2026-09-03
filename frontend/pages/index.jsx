@@ -7,6 +7,9 @@ import StylometryView from "../components/views/StylometryView";
 import IngestView from "../components/views/IngestView";
 import AuditView from "../components/views/AuditView";
 import DossierView from "../components/views/DossierView";
+import PresentationView from "../components/views/PresentationView";
+import DemoGuideModal from "../components/DemoGuideModal";
+import VideoShowcaseModal from "../components/views/VideoShowcaseModal";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -17,6 +20,10 @@ export default function Home() {
   const [caseData, setCaseData] = useState(null);
   const [graphData, setGraphData] = useState({ nodes: [], edges: [] });
   const [auditLog, setAuditLog] = useState([]);
+
+  // Pitch HUD & Video Showcase Modal States
+  const [showPitchHud, setShowPitchHud] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   // Fetch all initial data
   const loadData = async () => {
@@ -101,13 +108,15 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080c14] text-slate-200 flex flex-col select-none">
+    <div className="min-h-screen bg-[#080c14] text-slate-200 flex flex-col select-none relative">
       {/* Top Intelligence Navbar */}
       <Navbar
         activeRole={activeRole}
         setActiveRole={setActiveRole}
         health={health}
         onRefresh={loadData}
+        onTogglePitchHud={() => setShowPitchHud(!showPitchHud)}
+        onToggleVideoModal={() => setShowVideoModal(true)}
       />
 
       {/* Main Workspace Frame */}
@@ -159,8 +168,25 @@ export default function Home() {
           {activeTab === "dossier" && (
             <DossierView caseData={caseData} />
           )}
+
+          {activeTab === "presentation" && (
+            <PresentationView />
+          )}
         </main>
       </div>
+
+      {/* Floating 5-Minute Live Pitch HUD Prompter */}
+      <DemoGuideModal
+        isOpen={showPitchHud}
+        onClose={() => setShowPitchHud(false)}
+        onNavigate={(tab) => setActiveTab(tab)}
+      />
+
+      {/* Interactive Video Showcase & Architecture Modal */}
+      <VideoShowcaseModal
+        isOpen={showVideoModal}
+        onClose={() => setShowVideoModal(false)}
+      />
     </div>
   );
 }

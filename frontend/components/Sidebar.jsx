@@ -61,6 +61,14 @@ export default function Sidebar({ activeTab, setActiveTab, caseData }) {
       badge: "REPORT",
       badgeColor: "bg-blue-950 text-blue-400 border border-blue-800/60",
     },
+    {
+      id: "presentation",
+      label: "Slide Presentation",
+      sublabel: "10-Slide Deck for Judges",
+      icon: Layers,
+      badge: "SLIDES",
+      badgeColor: "bg-indigo-950 text-indigo-300 border border-indigo-800/60",
+    },
   ];
 
   return (

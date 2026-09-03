@@ -8,9 +8,18 @@ import {
   Terminal,
   RefreshCw,
   Cpu,
+  Film,
+  Sparkles,
 } from "lucide-react";
 
-export default function Navbar({ activeRole, setActiveRole, health, onRefresh }) {
+export default function Navbar({
+  activeRole,
+  setActiveRole,
+  health,
+  onRefresh,
+  onTogglePitchHud,
+  onToggleVideoModal,
+}) {
   const [time, setTime] = useState("");
 
   useEffect(() => {
@@ -110,6 +119,29 @@ export default function Navbar({ activeRole, setActiveRole, health, onRefresh })
           <Clock className="w-3.5 h-3.5 text-slate-400" />
           <span>{time}</span>
         </div>
+
+        {/* Interactive Rehearsal & Showcase Launchers */}
+        {onTogglePitchHud && (
+          <button
+            onClick={onTogglePitchHud}
+            className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs font-mono transition shadow-[0_0_10px_rgba(245,158,11,0.3)]"
+            title="Open 5-Minute Live Pitch Prompter & Timer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Pitch HUD</span>
+          </button>
+        )}
+
+        {onToggleVideoModal && (
+          <button
+            onClick={onToggleVideoModal}
+            className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-800/60 font-bold text-xs font-mono transition"
+            title="Open Video Architecture Showcase"
+          >
+            <Film className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Video Demo</span>
+          </button>
+        )}
 
         {/* Refresh button */}
         {onRefresh && (
