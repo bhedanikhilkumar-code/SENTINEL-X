@@ -1,0 +1,95 @@
+PROPRIETARY SOURCE-CODE AND INTELLECTUAL PROPERTY LICENSE
+=========================================================
+SENTINEL-X: Dark Web Threat Actor De-Anonymization Platform
+Problem Statement: SIH26151 | Sponsoring Organization: NTRO
+
+Copyright (c) 2026 Nikhil Kumar Bheda (bhedanikhilkumar-code).
+All Rights Reserved.
+
+CONFIDENTIAL & PROPRIETARY. NOTICE TO ALL USERS AND THIRD PARTIES:
+This software, source code, documentation, mathematical formulation, graph
+correlations, styling, and design assets ("Software") are the exclusive
+intellectual property of Nikhil Kumar Bheda ("Author").
+
+BY ACCESSING, VIEWING, CLONING, OR DOWNLOADING THIS REPOSITORY, YOU EXPRESSLY
+AGREE TO BE LEGALLY BOUND BY THE TERMS AND CONDITIONS OF THIS LICENSE.
+
+-----------------------------------------------------------------------------
+1. STRICT PROHIBITION ON COPYING AND DISTRIBUTION
+-----------------------------------------------------------------------------
+Except as expressly authorized under Section 4 below, NO PERSON, ORGANIZATION,
+COMPANY, OR ENTITY HAS PERMISSION TO:
+(a) Copy, duplicate, clone, replicate, mirror, reproduce, or screenshot any
+    part of this source code, architecture, design, or documentation.
+(b) Publish, distribute, broadcast, sublicense, lease, sell, rent, or transfer
+    the Software or any portion thereof to any public or private repository,
+    website, file sharing platform, or digital media.
+(c) Claim authorship, copyright, patent, trade secret, or ownership rights over
+    the Software or any concepts, algorithms, UI designs, or formulas contained
+    within it.
+
+-----------------------------------------------------------------------------
+2. PROHIBITION ON MODIFICATIONS AND DERIVATIVE WORKS
+-----------------------------------------------------------------------------
+You may NOT:
+(a) Modify, translate, adapt, alter, or enhance the Software in whole or in part.
+(b) Create derivative works, forks, extensions, or competing products based upon
+    the Software or its underlying architectures and mathematical formulations.
+(c) Decompile, disassemble, reverse engineer, decrypt, or attempt to derive the
+    internal algorithms, heuristics, or trade secrets of the Software.
+
+-----------------------------------------------------------------------------
+3. PROHIBITION ON ARTIFICIAL INTELLIGENCE & MACHINE LEARNING TRAINING
+-----------------------------------------------------------------------------
+Under no circumstances may any part of this repository (including code, text,
+markdown, and test data) be used to train, test, fine-tune, or benchmark
+artificial intelligence models, large language models (LLMs), neural networks,
+or automated code generators without explicit prior written consent from the Author.
+
+-----------------------------------------------------------------------------
+4. LIMITED EVALUATION EXCEPTION (SMART INDIA HACKATHON & NTRO)
+-----------------------------------------------------------------------------
+A non-exclusive, non-transferable, revocable, and limited authorization is
+granted SOLELY to:
+(a) The official organizing committees, evaluators, and jury panels of
+    Smart India Hackathon (SIH 2026); and
+(b) The designated representatives and evaluators of the National Technical
+    Research Organisation (NTRO);
+for the exclusive purpose of academic evaluation, assessment, judging, and
+verification of the submission under Problem Statement SIH26151.
+
+This exception does NOT grant any right to redistribute, publicly display, or
+commercially deploy the Software beyond the authorized SIH 2026 evaluation process.
+
+-----------------------------------------------------------------------------
+5. INTELLECTUAL PROPERTY RIGHTS & LEGAL REMEDIES
+-----------------------------------------------------------------------------
+The Software is protected by:
+- The Indian Copyright Act, 1957 (as amended)
+- The Information Technology Act, 2000
+- The Berne Convention for the Protection of Literary and Artistic Works
+- The Agreement on Trade-Related Aspects of Intellectual Property Rights (TRIPS)
+- Universal Copyright Convention and applicable international intellectual
+  property laws.
+
+ANY UNAUTHORIZED COPYING, PLAGIARISM, UNATTRIBUTED USAGE, COMMERCIAL EXPLOITATION,
+OR DISTRIBUTION OF THIS REPOSITORY CONSTITUTES INFRINGEMENT OF COPYRIGHT AND WILL
+BE SUBJECT TO IMMEDIATE CIVIL AND CRIMINAL PROSECUTION TO THE MAXIMUM EXTENT
+PERMITTED BY APPLICABLE LAW, INCLUDING INJUNCTIVE RELIEF, DAMAGES, STATUTORY
+PENALTIES, AND ATTORNEY'S FEES.
+
+-----------------------------------------------------------------------------
+6. NO WARRANTY
+-----------------------------------------------------------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM OR
+IN CONNECTION WITH THE SOFTWARE.
+
+=============================================================================
+For licensing inquiries, permissions, or authorized collaborations:
+Author: Nikhil Kumar Bheda
+GitHub: https://github.com/bhedanikhilkumar-code
+Email:  bhedanikhilkumar@gmail.com
+=============================================================================

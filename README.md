@@ -1,5 +1,9 @@
 # 🗡️ SENTINEL-X — Dark Web Threat Actor De-Anonymization Platform
 
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary%20%2F%20All%20Rights%20Reserved-red.svg)](LICENSE)
+[![SIH 2026](https://img.shields.io/badge/SIH%202026-Problem%20SIH26151-blue.svg)](https://www.sih.gov.in/)
+[![NTRO](https://img.shields.io/badge/Sponsor-NTRO-06b6d4.svg)](https://ntro.gov.in/)
+
 **SIH26151 | Sponsor: NTRO | Theme: Blockchain & Cybersecurity**
 
 Analyst Workbench implementing the PRD's 6 modules:
@@ -59,3 +63,17 @@ synthetic records.
 - SQLite → PostgreSQL/Neo4j: set `SENTINELX_DB_URL`; `GraphService.rebuild_from_db` → Neo4j GDS queries
 - Hashed feature vectors → stylometry-tuned SBERT via `stylometry.embed_document`
 - Celery+Redis workers for ingestion at scale; Tor collector via `stem` (network-policy isolated)
+
+## 🔒 Intellectual Property & Proprietary License
+
+**Copyright © 2026 Nikhil Kumar Bheda (`bhedanikhilkumar-code`). All Rights Reserved.**
+
+This repository and all its constituent files, source code, mathematical formulations, graph correlation models, UI designs, and architectures are **STRICTLY PROPRIETARY AND CONFIDENTIAL**.
+
+- 🚫 **No Unauthorized Copying:** Duplicating, cloning, scraping, redistributing, or mirroring this codebase (in whole or in part) without explicit prior written authorization is strictly prohibited.
+- 🚫 **No Derivative Works:** Modifying, decompiling, reverse-engineering, or creating derivative products based on this architecture is prohibited.
+- 🚫 **No AI Training:** Using any content from this repository to train or evaluate machine learning or generative AI models is forbidden.
+- ⚖️ **Evaluation Notice:** Authorized exclusively for evaluation by the official **Smart India Hackathon (SIH 2026)** jury and **National Technical Research Organisation (NTRO)** evaluators for Problem Statement SIH26151.
+
+For full legal terms, statutory penalties, and copyright protections under the Indian Copyright Act (1957) and international treaties, refer to the [LICENSE](LICENSE) file.
+
