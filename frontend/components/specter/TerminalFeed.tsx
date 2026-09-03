@@ -31,10 +31,7 @@ export default function TerminalFeed({ actorCodename }: TerminalFeedProps) {
       return;
     }
     if (!isPaused && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        left: scrollContainerRef.current.scrollWidth,
-        behavior: "smooth",
-      });
+      scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
     }
   }, [logs, isPaused]);
 

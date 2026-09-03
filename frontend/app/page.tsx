@@ -54,10 +54,30 @@ export default function SpecterTracePage() {
 
   const currentActor: ActorData = TARGET_ACTORS[selectedActorId] || TARGET_ACTORS["phantom-krypt"];
 
-  // Ensure view is securely locked to the top on page load/refresh
+  // Lock scroll on mount & prevent browser from restoring lower scroll position on reload
   useEffect(() => {
     if (typeof window !== "undefined") {
+      if ("scrollRestoration" in window.history) {
+        window.history.scrollRestoration = "manual";
+      }
       window.scrollTo(0, 0);
+      const main = document.getElementById("workbench-main");
+      if (main) main.scrollTop = 0;
+
+      // Ensure viewport stays locked at the top after dynamic async components finish loading
+      const t1 = setTimeout(() => {
+        window.scrollTo(0, 0);
+        if (main) main.scrollTop = 0;
+      }, 50);
+      const t2 = setTimeout(() => {
+        window.scrollTo(0, 0);
+        if (main) main.scrollTop = 0;
+      }, 300);
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     }
   }, []);
 
@@ -66,7 +86,7 @@ export default function SpecterTracePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070a13] text-slate-200 flex flex-col justify-between font-sans selection:bg-cyan-500 selection:text-black">
+    <div className="h-screen max-h-screen w-screen overflow-hidden bg-[#070a13] text-slate-200 flex flex-col justify-between font-sans selection:bg-cyan-500 selection:text-black">
       {/* ========================================================================= */}
       {/* TOP HEADER: DEFENSE INTELLIGENCE APPARATUS */}
       {/* ========================================================================= */}
@@ -138,7 +158,7 @@ export default function SpecterTracePage() {
       {/* ========================================================================= */}
       {/* 4-ZONE MAIN WORKBENCH GRID */}
       {/* ========================================================================= */}
-      <main className="flex-1 p-3.5 grid grid-cols-1 lg:grid-cols-12 gap-3.5 overflow-y-auto">
+      <main id="workbench-main" className="flex-1 min-h-0 p-3.5 grid grid-cols-1 lg:grid-cols-12 gap-3.5 overflow-y-auto">
         {/* ZONE 1: SUSPECT DOSSIER & PROFILE (Left Column - 3 Cols) */}
         <section className="lg:col-span-3 h-full min-h-[580px]">
           <ActorProfile
@@ -217,7 +237,7 @@ export default function SpecterTracePage() {
       {/* ========================================================================= */}
       {/* BOTTOM BAR: LIVE NTRO CORRELATION TERMINAL STREAM */}
       {/* ========================================================================= */}
-      <footer className="shrink-0">
+      <footer className="shrink-0 z-20">
         <TerminalFeed actorCodename={currentActor.codename} />
       </footer>
 
