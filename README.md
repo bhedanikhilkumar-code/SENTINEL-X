@@ -15,21 +15,29 @@ Analyst Workbench implementing the PRD's 6 modules:
 
 ## Quick Start
 
+### Option 1: One-Click Launchers (Windows)
+- **Launch Full Platform:** Double-click `run_platform.bat`
+- **Launch via Docker Compose:** Double-click `docker_run.bat` (or run `docker compose up --build`)
+- **Run Automated Rehearsal Suite (All 7 Tests):** Double-click `run_tests.bat`
+
+### Option 2: Manual Terminal Commands
 ```bash
-# Backend (terminal 1)
+# Terminal 1: Backend
 cd backend
 pip install -r requirements.txt
 python -m app.seed --force   # loads fictional "Tracking DarkViper" demo corpus
 python -m uvicorn app.main:app --port 8000
 
-# Frontend (terminal 2)
+# Terminal 2: Frontend
 cd frontend
 npm install
 npm run dev                 # http://localhost:3000
 ```
 
-- API docs: http://localhost:8000/docs
-- Analyst Workbench: http://localhost:3000
+- **Analyst Workbench UI:** http://localhost:3000
+- **FastAPI Interactive Docs:** http://localhost:8000/docs
+- **Pitch Deck & Jury Defense Guide:** `PITCH_DECK_AND_DEMO_SCRIPT.md`
+- **10-Slide Presentation Outline:** `PRESENTATION_SLIDES_DECK.md`
 
 ## Key API Endpoints
 - `POST /api/ingest/document` — Module A+B: ingest (SHA-256 anchor, dedup, auto-extract)
