@@ -230,3 +230,18 @@ class WalletCluster(Base):
         String(36), ForeignKey("cases.id"), nullable=True, index=True
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_iso)
+
+
+# ── NEW: WalletTag ────────────────────────────────────────────────────────────
+
+class WalletTag(Base):
+    """Analyst annotations and forensic tags on cryptocurrency addresses (PRD §3.D)."""
+    __tablename__ = "wallet_tags"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    address: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
+    tag: Mapped[str] = mapped_column(String(64), nullable=False)
+    category: Mapped[str] = mapped_column(String(64), default="custom")
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    author: Mapped[str] = mapped_column(String(64), default="analyst_demo")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_iso)
