@@ -9,10 +9,19 @@ import {
   Layers,
   Sparkles,
   ShieldCheck,
+  Globe2,
 } from "lucide-react";
 
 export default function Sidebar({ activeTab, setActiveTab, caseData }) {
   const NAV_ITEMS = [
+    {
+      id: "specter",
+      label: "SPECTER-TRACE",
+      sublabel: "3D Geo-Spatial Earth & Radar",
+      icon: Globe2,
+      badge: "3D GEO",
+      badgeColor: "bg-red-950 text-red-400 border border-red-800/60",
+    },
     {
       id: "dashboard",
       label: "SOC Command",

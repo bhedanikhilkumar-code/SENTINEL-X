@@ -10,6 +10,7 @@ import DossierView from "../components/views/DossierView";
 import PresentationView from "../components/views/PresentationView";
 import DemoGuideModal from "../components/DemoGuideModal";
 import VideoShowcaseModal from "../components/views/VideoShowcaseModal";
+import SpecterTracePage from "../app/page";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -130,6 +131,12 @@ export default function Home() {
 
         {/* Dynamic Center View Container */}
         <main className="flex-1 overflow-hidden bg-[#080c15]">
+          {activeTab === "specter" && (
+            <div className="h-full overflow-y-auto">
+              <SpecterTracePage />
+            </div>
+          )}
+
           {activeTab === "dashboard" && (
             <DashboardView
               cases={cases}
