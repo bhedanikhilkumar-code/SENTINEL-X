@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FileSpreadsheet,
   Download,
@@ -11,11 +11,48 @@ import {
   BadgeCheck,
 } from "lucide-react";
 
+// RBAC (PRD §4.2): dossier export is soc_lead-only on the backend.
+// The UI performs a silent demo login (anjali/soc_lead) and retries with a
+// Bearer token; a real deployment replaces these with OIDC credentials.
+async function fetchDossierPdf(caseId) {
+  const tryFetch = (token) =>
+    fetch(`/api/cases/${caseId}/dossier/pdf`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  let res = await tryFetch(localStorage.getItem("sentinelx_token"));
+  if (res.status === 403) {
+    const login = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "anjali", password: "anjali123" }),
+    });
+    if (!login.ok) throw new Error("SOC Lead authentication failed");
+    const { access_token } = await login.json();
+    localStorage.setItem("sentinelx_token", access_token);
+    res = await tryFetch(access_token);
+  }
+  if (!res.ok) throw new Error(`Export failed (HTTP ${res.status})`);
+  return res.blob();
+}
+
 export default function DossierView({ caseData }) {
   const caseId = caseData?.id || "demo-case";
+  const [notice, setNotice] = useState(null);
 
-  const handleDownloadPdf = () => {
-    window.open(`/api/cases/${caseId}/dossier/pdf`, "_blank");
+  const handleDownloadPdf = async () => {
+    setNotice({ kind: "info", text: "Generating & authorizing (SOC Lead role required)…" });
+    try {
+      const blob = await fetchDossierPdf(caseId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `SENTINEL-X_DOSSIER_${caseId.slice(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setNotice({ kind: "ok", text: "Dossier exported — action logged to the hash-chained audit trail." });
+    } catch (e) {
+      setNotice({ kind: "err", text: e.message });
+    }
   };
 
   return (
@@ -35,6 +72,15 @@ export default function DossierView({ caseData }) {
             Evidentiary package with SHA-256 hash-anchored chain of custody and multi-signal attribution proof.
           </p>
         </div>
+
+        {notice && (
+          <div className={`px-4 py-2 rounded border font-mono text-xs ${
+            notice.kind === "ok" ? "bg-emerald-950 border-emerald-800 text-emerald-300"
+            : notice.kind === "err" ? "bg-red-950 border-red-800 text-red-300"
+            : "bg-slate-900 border-slate-700 text-slate-300"}`}>
+            {notice.text}
+          </div>
+        )}
 
         <button
           onClick={handleDownloadPdf}

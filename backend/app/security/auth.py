@@ -75,8 +75,8 @@ def require_role(minimum: str):
     In demo mode (no token) the request is treated as analyst_demo — which
     still BLOCKS soc_lead-only operations like dossier export."""
     def dep(user: User | None = Depends(get_current_user)) -> User | None:
-        if user is None:  # demo mode anonymous
-            if AUTH_REQUIRED and ROLE_RANK.get(minimum, 1) > ROLE_RANK["analyst"]:
+        if user is None:  # demo mode anonymous — treated as ANALYST, not omnipotent
+            if ROLE_RANK.get(minimum, 1) > ROLE_RANK["analyst"]:
                 raise HTTPException(403,
                     f"role '{minimum}' required — login via POST /api/auth/login "
                     f"(demo: anjali/anjali123 for soc_lead)")
