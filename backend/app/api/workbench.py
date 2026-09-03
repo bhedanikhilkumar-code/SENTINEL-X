@@ -157,6 +157,7 @@ def search_correlation(body: SearchQuery, db: Session = Depends(get_db)):
         {
             "platform": "GitHub",
             "handle": "vk_devtools",
+            "alias_linked": "DarkViper",
             "name": "Vikas Kumar",
             "email": "vk.devtools@protonmail.com",
             "pgp_key_id": "9F3A21C0D4E7B881",
@@ -169,6 +170,7 @@ def search_correlation(body: SearchQuery, db: Session = Depends(get_db)):
         {
             "platform": "Synthetic Breach 2024",
             "handle": "vk_dev",
+            "alias_linked": "DarkViper",
             "email": "vk.devtools@protonmail.com",
             "ip_origin": "103.21.244.18 (Mumbai, India, Tata Teleservices)",
             "leaked_pass_hash": "$2b$12$e8wF92kLm9Q1...",
@@ -179,6 +181,7 @@ def search_correlation(body: SearchQuery, db: Session = Depends(get_db)):
         {
             "platform": "Blockchain Intelligence Cluster",
             "wallet": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            "alias_linked": "DarkViper",
             "cluster": "btc_co_spend_4091",
             "destination": "Binance Deposit Address 0x89f2b8a",
             "total_extracted_vol": "14.28 BTC",
