@@ -9,6 +9,7 @@
 ---
 
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary%20%2F%20All%20Rights%20Reserved-red.svg?style=for-the-badge&logo=shield)](LICENSE)
+[![Cloudflare Pages Live](https://img.shields.io/badge/Live%20Platform-sentinel--tor.pages.dev-F38020.svg?style=for-the-badge&logo=cloudflare&logoColor=white)](https://sentinel-tor.pages.dev)
 [![SIH 2026](https://img.shields.io/badge/SIH%202026-Problem%20SIH26151-06b6d4.svg?style=for-the-badge&logo=target)](https://www.sih.gov.in/)
 [![Sponsor: NTRO](https://img.shields.io/badge/Sponsor-NTRO-10b981.svg?style=for-the-badge&logo=defense)](https://ntro.gov.in/)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20v0.115-009688.svg?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
@@ -133,6 +134,12 @@ Built with **Next.js 14**, **React 18**, **Tailwind CSS**, and **Cytoscape.js**,
 ---
 
 ## ⚡ Quick Start & Deployment
+
+> ### 🌐 Official Cloudflare Production Deployment
+> - **Live Public Platform:** **[https://sentinel-tor.pages.dev](https://sentinel-tor.pages.dev)**
+> - **API Health Check:** [https://sentinel-tor.pages.dev/api/health](https://sentinel-tor.pages.dev/api/health)
+> - **Global CDN & SSL:** Cloudflare Mumbai (BOM) Edge Datacenter | Wildcard HTTPS Active
+> - **Accessible:** 24/7 globally on any smartphone, tablet, or PC with zero installation!
 
 ### Option 1: One-Click Launchers (Windows)
 - **Launch Full Platform:** Double-click `run_platform.bat`

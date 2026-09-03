@@ -7,6 +7,8 @@
 
 ## 1. Project Title
 **SENTINEL-X: Unified Dark Web Threat Actor De-Anonymization & Attribution Intelligence Platform**
+- **Official Live Platform URL:** **[https://sentinel-tor.pages.dev](https://sentinel-tor.pages.dev)**
+- **API Health Endpoint:** [https://sentinel-tor.pages.dev/api/health](https://sentinel-tor.pages.dev/api/health)
 
 ---
 
