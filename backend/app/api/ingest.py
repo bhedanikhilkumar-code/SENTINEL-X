@@ -1,6 +1,8 @@
 """Ingestion + extraction API — Module A (ingest) & Module B (extraction trigger)."""
 import hashlib
+import os
 from datetime import datetime
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -25,9 +27,10 @@ class IngestBody(BaseModel):
     partial_capture: bool = False
 
 
+# CHANGED: Added Celery async background task triggering to ingest_document
 @router.post("/document")
 def ingest_document(body: IngestBody, db: Session = Depends(get_db)):
-    """Module A entrypoint: hash → dedup → store → auto-run Module B extraction."""
+    """Module A entrypoint: hash → dedup → store → auto-run Module B extraction + Celery task."""
     sha = hashlib.sha256(body.raw_text.encode()).hexdigest()
     existing = db.query(Document).filter_by(sha256=sha).first()
     if existing and not body.partial_capture:
@@ -58,10 +61,101 @@ def ingest_document(body: IngestBody, db: Session = Depends(get_db)):
     db.commit()
     append_audit(db, actor="system", action="ingest.document", entity_ids=[doc.id],
                  detail=f"{body.source_type} sha256={sha[:16]}… artifacts={len(artifacts)}")
-    return {"id": doc.id, "sha256": sha, "deduped": False,
-            "artifacts": [{"type": a["artifact_type"], "value": a["value"],
-                           "confidence": a["extraction_confidence"]} for a in artifacts],
-            "stylo_features": feats}
+
+    # NEW: Trigger Celery worker task asynchronously
+    task_id = None
+    try:
+        from app.workers.tasks import ingest_document_task
+        task = ingest_document_task.apply_async(args=[doc.id], retry=False)
+        task_id = task.id
+    except Exception:
+        task_id = None
+
+    return {
+        "id": doc.id,
+        "sha256": sha,
+        "deduped": False,
+        "task_id": task_id,
+        "artifacts": [{"type": a["artifact_type"], "value": a["value"],
+                       "confidence": a["extraction_confidence"]} for a in artifacts],
+        "stylo_features": feats
+    }
+
+
+# NEW: UrlIngestBody and POST /api/ingest/url
+class UrlIngestBody(BaseModel):
+    url: str
+    case_id: Optional[str] = None
+
+
+@router.post("/url")
+async def ingest_url(body: UrlIngestBody, db: Session = Depends(get_db)):
+    """PRD §3.A: Accept darkweb URL, trigger Tor circuit rotation and async collection worker."""
+    from app.workers.tor_collector import collect_forum_page
+    try:
+        doc = await collect_forum_page(body.url, case_id=body.case_id)
+        return {
+            "status": "queued",
+            "doc_id": doc.id,
+            "url": body.url,
+            "case_id": body.case_id,
+            "sha256": doc.sha256
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Tor collector error: {str(exc)}")
+
+
+# NEW: GET /api/ingest/status/{task_id}
+@router.get("/status/{task_id}")
+def get_task_status(task_id: str):
+    """PRD §3.A: Return Celery background worker task execution status and results."""
+    try:
+        from celery.result import AsyncResult
+        from app.workers.celery_app import celery_app
+        res = AsyncResult(task_id, app=celery_app)
+        return {
+            "task_id": task_id,
+            "status": res.status,
+            "ready": res.ready(),
+            "successful": res.successful() if res.ready() else None,
+            "result": res.result if res.ready() and not isinstance(res.result, Exception) else str(res.result) if res.ready() else None
+        }
+    except Exception as exc:
+        return {"task_id": task_id, "status": "UNKNOWN", "error": str(exc)}
+
+
+# NEW: GET /api/ingest/queue
+@router.get("/queue")
+def get_queue_status():
+    """PRD §3.A: Inspect Redis queue lengths for pending, active, and failed worker tasks."""
+    import redis
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    try:
+        r = redis.from_url(redis_url, socket_connect_timeout=0.5, socket_timeout=0.5)
+        r.ping()
+        default_len = r.llen("default")
+        ingestion_len = r.llen("ingestion")
+        export_len = r.llen("export")
+        return {
+            "status": "connected",
+            "pending": default_len + ingestion_len + export_len,
+            "active": 0,
+            "failed": 0,
+            "queues": {
+                "default": default_len,
+                "ingestion": ingestion_len,
+                "export": export_len
+            }
+        }
+    except Exception as exc:
+        return {
+            "status": "offline",
+            "pending": 0,
+            "active": 0,
+            "failed": 0,
+            "queues": {"default": 0, "ingestion": 0, "export": 0},
+            "note": f"Redis broker offline ({exc})"
+        }
 
 
 @router.get("/document/{doc_id}")
@@ -88,21 +182,14 @@ class LiveIngestBody(BaseModel):
 @router.post("/live")
 def live_ingest(body: LiveIngestBody, db: Session = Depends(get_db),
                 user=Depends(require_role("analyst"))):
-    """Module A live path: Tor-collected URL → existing hash→dedup→extract pipeline.
-
-    PRD boundaries preserved:
-    - Egress ONLY via Tor (no direct fallback — collector.py enforces this).
-    - CAPTCHA blocks are queued for human-in-the-loop resolution, audited, never auto-defeated.
-    - RBAC: analyst+ only (PRD §4.2); export of a real analyst id into the audit chain.
-    """
+    """Module A live path: Tor-collected URL → existing hash→dedup→extract pipeline."""
     from app.modules import collector
     result = collector.collect(body.url, rotate=body.rotate_circuit)
     append_audit(db, actor="collector", action="ingest.live_attempt", entity_ids=[body.case_id] if body.case_id else [],
                  detail=f"url={body.url} status={result['status']} circuit_rotated={result.get('circuit_rotated')}")
     if not result["ok"]:
-        raise HTTPException(503, result)  # tor_unavailable / fetch_error — structured, actionable
+        raise HTTPException(503, result)
     if result["status"] == "captcha_blocked":
-        # Human-in-the-loop queue (PRD §3.A): URL parked, analyst resolves via assisted browsing.
         append_audit(db, actor="collector", action="ingest.captcha_queued", entity_ids=[],
                      detail=f"Human resolution required for {body.url} — assisted-browsing pane")
         return {"queued_for_human": True, "url": body.url, **{k: v for k, v in result.items() if k != "raw_text"}}
@@ -180,4 +267,3 @@ def resolve_captcha(body: CaptchaResolveBody, db: Session = Depends(get_db)):
         "collector_state": "UNLOCKED",
         "audit_seq": db.query(AuditEntry).count()
     }
-

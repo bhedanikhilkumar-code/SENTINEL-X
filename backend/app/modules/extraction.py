@@ -199,3 +199,6 @@ def extract_artifacts(raw_text: str, source_doc_id: str) -> list[dict]:
             seen.add(k)
             uniq.append(a)
     return uniq
+
+
+extract_all_artifacts = extract_artifacts

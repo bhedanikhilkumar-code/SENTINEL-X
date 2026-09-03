@@ -1,4 +1,4 @@
-# SENTINEL-X Frontend Dockerfile
+# SENTINEL-X Frontend Dockerfile (Production Image for NTRO SIH26151)
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -16,7 +16,7 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \
     NEXT_TELEMETRY_DISABLED=1 \
-    BACKEND_URL=http://backend:8000
+    BACKEND_URL=http://backend:8100
 
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules

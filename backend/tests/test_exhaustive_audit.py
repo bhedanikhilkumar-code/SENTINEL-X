@@ -217,8 +217,14 @@ def run_all_audits():
             ("POST", "/api/correlation/search", {"query": "DarkViper"}, 200),
             ("POST", "/api/ingest/tor/rotate", {}, 200),
             ("POST", "/api/ingest/captcha/resolve", {"onion_url": "http://test.onion", "challenge_id": "c1"}, 200),
-            (f"GET", f"/api/cases/{case.id}/dossier/pdf", None, 200),
         ]
+
+        # CHANGED (Step 1): dossier export is now soc_lead-only — authenticate (anjali/anjali123)
+        login = client.post("/api/auth/login", json={"username": "anjali", "password": "anjali123"})
+        record("API POST /api/auth/login (soc_lead)", login.status_code == 200,
+               f"Status: {login.status_code}")
+        token = login.json().get("access_token", "")
+        auth_headers = {"Authorization": f"Bearer {token}"}
 
         for method, url, body, expected_code in endpoints_to_test:
             if method == "GET":
@@ -227,6 +233,12 @@ def run_all_audits():
                 res = client.post(url, json=body)
             record(f"API {method} {url.split('?')[0]}", res.status_code == expected_code,
                    f"Status: {res.status_code}")
+
+        # soc_lead-authorized dossier export
+        res = client.get(f"/api/cases/{case.id}/dossier/pdf", headers=auth_headers)
+        record(f"API GET /api/cases/{case.id}/dossier/pdf",
+               res.status_code == 200 and res.content.startswith(b"%PDF"),
+               f"Status: {res.status_code}, PDF: {res.content.startswith(b'%PDF')}")
 
     finally:
         db.close()

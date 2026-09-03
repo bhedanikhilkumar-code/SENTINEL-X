@@ -40,6 +40,7 @@ def test_02_ingest_and_cryptographic_extraction():
         "source_url": f"http://darkvpx7leakdb6f.onion/post/rehearsal_{uid}",
         "source_type": "leak_dump",
         "author_handle": "DarkViper",
+        "posted_at": "2026-08-21T08:30:00",  # CHANGED: fixed IST-daytime UTC ts (14:00 IST) so test_03 tz ranking is deterministic
         "raw_text": f"Smoke test dump #{uid}. Deposit BTC: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa. PGP 9F3A21C0D4E7B881. Contact: darkviper.onion@protonmail.com.",
     }
     res = client.post("/api/ingest/document", json=payload)
@@ -157,7 +158,12 @@ def test_07_court_admissible_pdf_dossier():
     db.close()
     assert case is not None
 
-    res = client.get(f"/api/cases/{case.id}/dossier/pdf")
+    # CHANGED (Step 1): dossier export is soc_lead-only — login and pass Bearer token
+    login = client.post("/api/auth/login", json={"username": "anjali", "password": "anjali123"})
+    assert login.status_code == 200, login.text
+    token = login.json()["access_token"]
+    res = client.get(f"/api/cases/{case.id}/dossier/pdf",
+                     headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 200
     assert res.headers["content-type"] == "application/pdf"
     assert "attachment" in res.headers["content-disposition"]

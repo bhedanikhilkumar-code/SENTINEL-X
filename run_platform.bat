@@ -5,8 +5,8 @@ echo    SIH26151 - National Technical Research Organisation (NTRO)
 echo ======================================================================
 echo.
 
-echo Starting FastAPI Backend on port 8000...
-start "SENTINEL-X Backend (FastAPI)" cmd /k "cd backend && python -m uvicorn app.main:app --port 8000"
+echo Starting FastAPI Backend on port 8100...
+start "SENTINEL-X Backend (FastAPI)" cmd /k "cd backend && python -m uvicorn app.main:app --port 8100"
 
 timeout /t 2 >nul
 
@@ -15,6 +15,6 @@ start "SENTINEL-X Frontend (Next.js)" cmd /k "cd frontend && npm run dev"
 
 echo.
 echo Both services are launching:
-echo   - Backend API Docs:       http://localhost:8000/docs
+echo   - Backend API Docs:       http://localhost:8100/docs
 echo   - Analyst Workbench UI:   http://localhost:3000
 echo ======================================================================

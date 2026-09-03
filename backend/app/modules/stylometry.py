@@ -81,9 +81,11 @@ def _feature_vector(features: dict, dim: int = 256) -> list[float]:
     return [round(x / norm, 6) for x in vec]
 
 
+# CHANGED (Step 6.2): Swap embed_document() to use vector_store
 def embed_document(text: str) -> list[float]:
-    """Embedding interface. MVP: hashed features. Swap-in: SBERT stylometry-tuned model."""
-    return _feature_vector(extract_features(text))
+    """ChromaDB & SentenceTransformer dense semantic embedding interface."""
+    from app.modules.vector_store import get_embedding
+    return get_embedding(text)
 
 
 def cosine(a: list[float], b: list[float]) -> float:
@@ -162,12 +164,32 @@ def stylometric_similarity(text_a: str, text_b: str, tz_a=None, tz_b=None) -> di
     jsim = 1 - js_divergence(fa["function_word_dist"], fb["function_word_dist"])
     psim = punctuation_similarity(fa["punctuation"], fb["punctuation"])
     tsim = timezone_overlap(tz_a or [], tz_b or []) if has_tz else 0.0
-    s = (weights["embedding"] * c + weights["func_words"] * jsim
-         + weights["punct"] * psim + weights["tz"] * tsim)
+    # Stylometric feature score
+    s_features = (weights["embedding"] * c + weights["func_words"] * jsim
+                  + weights["punct"] * psim + weights["tz"] * tsim)
+    
+    # NEW (Step 6.2): Compute dense semantic similarity via ChromaDB / vector store
+    emb_a = embed_document(text_a)
+    emb_b = embed_document(text_b)
+    s_semantic = cosine(emb_a, emb_b)
+    
+    # Composite S_total: 0.5 * S_features + 0.5 * S_semantic (capped at 0.85 per PRD §3.C)
+    s_total = 0.5 * s_features + 0.5 * s_semantic
+    final_score = round(min(0.85, s_total), 4)
+
     return {
-        "s_style": round(min(0.85, s), 4),
-        "components": {"embedding_cosine": round(c, 4), "function_word_sim": round(jsim, 4),
-                       "punctuation_sim": round(psim, 4), "timezone_overlap": round(tsim, 4)},
+        "s_style": final_score,
+        "s_total": final_score,
+        "composite_similarity": final_score,
+        "s_features": round(s_features, 4),
+        "s_semantic": round(s_semantic, 4),
+        "components": {
+            "embedding_cosine": round(c, 4),
+            "function_word_sim": round(jsim, 4),
+            "punctuation_sim": round(psim, 4),
+            "timezone_overlap": round(tsim, 4),
+            "semantic_cosine": round(s_semantic, 4)
+        },
         "weights_used": {k: round(v, 3) for k, v in weights.items()},
         "low_sample_confidence": fa["n_words"] < 50 or fb["n_words"] < 50,
     }
@@ -264,3 +286,11 @@ def timezone_fit_breakdown(hist: list[int]) -> list[dict]:
     return sorted(results, key=lambda x: x["overlap_score"], reverse=True)
 
 
+def compare_profiles(text_or_fa, text_or_fb, tz_a=None, tz_b=None) -> dict:
+    """Compare two stylometric profiles or texts (Module C cross-document similarity)."""
+    if isinstance(text_or_fa, str) and isinstance(text_or_fb, str):
+        return stylometric_similarity(text_or_fa, text_or_fb, tz_a, tz_b)
+    if isinstance(text_or_fa, dict) and isinstance(text_or_fb, dict):
+        c = cosine(_feature_vector(text_or_fa), _feature_vector(text_or_fb))
+        return {"similarity": round(c, 4), "s_style": round(min(0.85, c), 4)}
+    return {"s_style": 0.5, "similarity": 0.5}

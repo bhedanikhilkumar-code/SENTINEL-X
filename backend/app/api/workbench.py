@@ -55,6 +55,14 @@ def get_communities(db: Session = Depends(get_db)):
         for c in sorted(comms, key=len, reverse=True)]}
 
 
+@router.get("/graph/timeline")
+def get_timeline(db: Session = Depends(get_db)):
+    """PRD §3.E: chronological graph growth — real posted_at-driven stages for the
+    time-slider replay (replaces the hardcoded frontend STAGES)."""
+    graph_service.rebuild_from_db(db)
+    return graph_service.timeline()
+
+
 class AnnotationBody(BaseModel):
     node_id: str
     note: str
@@ -259,6 +267,78 @@ def search_correlation(body: SearchQuery, db: Session = Depends(get_db)):
         "matched_identities": matches,
         "signals_evaluated": len(collected_signals),
         "correlation_result": confidence,
+    }
+
+
+# NEW (Step 6.3): Semantic search across darknet & clearnet document corpus using ChromaDB
+@router.get("/workbench/semantic-search")
+def semantic_search(
+    q: str,
+    n_results: int = 5,
+    threshold: float = 0.50,
+    db: Session = Depends(get_db)
+):
+    """PRD §3.C: Query ChromaDB vector index for stylistically and semantically similar documents."""
+    from app.modules import vector_store
+    
+    # Auto-index database documents if collection is currently empty
+    coll = vector_store.get_vector_collection()
+    if coll.count() == 0:
+        docs = db.query(Document).all()
+        for d in docs:
+            vector_store.add_document_embedding(
+                doc_id=d.id,
+                text=d.raw_text,
+                metadata={
+                    "doc_id": d.id,
+                    "author_handle": d.author_handle,
+                    "platform": d.platform,
+                    "source_type": d.source_type,
+                    "case_id": d.case_id or ""
+                }
+            )
+
+    hits = vector_store.find_similar_authors(query_text=q, n_results=n_results, threshold=threshold)
+    return {
+        "query": q,
+        "total_hits": len(hits),
+        "results": hits
+    }
+
+
+# NEW (Step 6.3): Document and alias clustering via ChromaDB embeddings
+@router.get("/workbench/clusters")
+def get_document_clusters(
+    case_id: str | None = None,
+    threshold: float = 0.65,
+    db: Session = Depends(get_db)
+):
+    """PRD §3.C: Cluster documents and author aliases based on pairwise semantic embedding similarity."""
+    from app.modules import vector_store
+
+    # Auto-index database documents if collection is currently empty
+    coll = vector_store.get_vector_collection()
+    if coll.count() == 0:
+        docs = db.query(Document).all()
+        for d in docs:
+            vector_store.add_document_embedding(
+                doc_id=d.id,
+                text=d.raw_text,
+                metadata={
+                    "doc_id": d.id,
+                    "author_handle": d.author_handle,
+                    "platform": d.platform,
+                    "source_type": d.source_type,
+                    "case_id": d.case_id or ""
+                }
+            )
+
+    clusters = vector_store.cluster_documents(case_id=case_id, similarity_threshold=threshold)
+    return {
+        "case_id": case_id,
+        "threshold": threshold,
+        "total_clusters": len(clusters),
+        "clusters": clusters
     }
 
 

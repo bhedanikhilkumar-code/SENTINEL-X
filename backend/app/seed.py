@@ -6,7 +6,7 @@ Run:  python -m app.seed
 """
 import sys
 sys.path.insert(0, ".")
-from app.db import SessionLocal, init_db  # noqa: E402
+from app.db import SessionLocal, sync_init_db  # noqa: E402
 from app.models import Case, User, RawDocument, Artifact  # noqa: E402
 from app.modules.extraction import extract_artifacts  # noqa: E402
 from app.modules.stylometry import extract_features, embed_document  # noqa: E402
@@ -71,7 +71,10 @@ CLEARNET_HINTS = [
 
 
 def seed(force: bool = False):
-    init_db()
+    if force:
+        sync_init_db(reset=True)
+    else:
+        sync_init_db()
     db = SessionLocal()
     existing_case = db.query(Case).filter_by(title="Tracking DarkViper").first()
     if existing_case and not force:
@@ -81,10 +84,7 @@ def seed(force: bool = False):
 
     if force:
         print("Resetting demo database...")
-        from app.models import Base
-        from app.db import engine
-        Base.metadata.drop_all(bind=engine)
-        Base.metadata.create_all(bind=engine)
+        sync_init_db(reset=True)
 
     soc = User(id="soc_lead_demo", username="anjali", role="soc_lead", display_name="Anjali (SOC Lead)")
     analyst = User(id="analyst_demo", username="priya", role="analyst", display_name="Priya (Senior Analyst)")

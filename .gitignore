@@ -25,3 +25,12 @@ backend/*.sqlite3
 .env.local
 .DS_Store
 Thumbs.db
+
+# Vector & Cache data
+chroma_data/
+backend/chroma_data/
+exports/
+backend/exports/
+.wrangler/
+frontend/.wrangler/
+backend/scripts/

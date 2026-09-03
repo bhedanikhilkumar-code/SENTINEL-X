@@ -80,3 +80,6 @@ def compute_c_total(signals: list[dict]) -> dict:
         "breakdown": breakdown,
         "method": "C_total = 1 − Π(1 − Ci·Wi) with source-document AND same-type independence adjustment",
     }
+
+
+compute_confidence = compute_c_total

@@ -16,7 +16,8 @@ const GeoLeafletMap = dynamic(() => import("../components/specter/GeoLeafletMap"
   ),
 });
 
-const KnowledgeGraph = dynamic(() => import("../components/specter/KnowledgeGraph"), {
+// Use the backend-connected graph component that fetches from FastAPI
+const KnowledgeGraphLive = dynamic(() => import("../components/specter/KnowledgeGraph"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full min-h-[380px] flex flex-col items-center justify-center bg-[#070a13] rounded-2xl border border-cyan-500/20 text-cyan-400 font-mono text-xs space-y-3">
@@ -34,7 +35,7 @@ import TorCircuitView from "../components/specter/TorCircuitView";
 import TerminalFeed from "../components/specter/TerminalFeed";
 import AttributionTimelineModal from "../components/specter/AttributionTimelineModal";
 import MerkleAuditModal from "../components/specter/MerkleAuditModal";
-import { generateNtroPdfDossier } from "../components/specter/pdfGenerator";
+import { downloadNtroPdfDossier } from "../components/specter/pdfGenerator";
 import {
   ShieldAlert,
   Radio,
@@ -82,7 +83,7 @@ export default function SpecterTracePage() {
   }, []);
 
   const handleTriggerPdf = () => {
-    generateNtroPdfDossier(currentActor, "Analyst: Priya S.");
+    downloadNtroPdfDossier(currentActor, "Analyst: Priya S.");
   };
 
   return (
@@ -208,7 +209,7 @@ export default function SpecterTracePage() {
           {/* ZONE 2: RENDER CYTOSCAPE GRAPH OR LEAFLET MAP */}
           <div className="flex-1 min-h-[360px]">
             {centerTab === "graph" ? (
-              <KnowledgeGraph actorId={currentActor.id} />
+              <KnowledgeGraphLive actorId={currentActor.id} />
             ) : (
               <GeoLeafletMap actorId={currentActor.id} />
             )}

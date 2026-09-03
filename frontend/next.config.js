@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8100";
+
 const nextConfig = {
   reactStrictMode: false,
-  output: "export",
   images: {
     unoptimized: true,
   },
@@ -10,6 +11,14 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${BACKEND_URL}/api/:path*`,
+      },
+    ];
   },
 };
 

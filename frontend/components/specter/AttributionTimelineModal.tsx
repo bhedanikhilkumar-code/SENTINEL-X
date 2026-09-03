@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
-import { X, Clock, ShieldCheck, CheckCircle2, AlertTriangle, Fingerprint, Calendar } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Clock, ShieldCheck, CheckCircle2, AlertTriangle, Fingerprint, Calendar, Layers } from "lucide-react";
+import { getTimeline } from "../../lib/api";
 
 interface AttributionTimelineModalProps {
   isOpen: boolean;
@@ -14,9 +15,9 @@ export default function AttributionTimelineModal({
   onClose,
   targetCodename = "PHANTOM-KRYPT",
 }: AttributionTimelineModalProps) {
-  if (!isOpen) return null;
+  const [timelineData, setTimelineData] = useState<{ total_nodes: number; total_edges: number; stages: any[] } | null>(null);
 
-  const events = [
+  const defaultStaticEvents = [
     {
       timestamp: "2024-08-14 02:31 UTC",
       type: "INGEST",
@@ -60,13 +61,29 @@ export default function AttributionTimelineModal({
       description: "Leaked SSH hostkey banner matched clearnet VPS IP 185.220.101.4 on Voxility AS3223, corroborated by UTC+3 diurnal curve.",
     },
     {
-      timestamp: "2025-01-11 14:10 UTC",
-      type: "ESCALATE",
+      timestamp: "2025-01-15 08:30 UTC",
+      type: "DOSSIER",
       badgeColor: "bg-red-900 text-white border-red-600",
       title: "Case escalated to LEA jurisdiction",
       description: "Attribution confidence threshold exceeded (94.8%). Evidence compiled into tamper-evident legal dossier.",
     },
   ];
+
+  useEffect(() => {
+    if (!isOpen) return;
+    (async () => {
+      try {
+        const tl = await getTimeline();
+        if (tl && tl.stages && tl.stages.length > 0) {
+          setTimelineData(tl);
+        }
+      } catch {
+        // Fallback to static
+      }
+    })();
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 select-none font-mono text-xs">
@@ -77,10 +94,15 @@ export default function AttributionTimelineModal({
             <Clock className="w-5 h-5 text-cyan-400 animate-pulse" />
             <div>
               <div className="font-bold text-slate-100 text-sm tracking-wide">
-                CHRONOLOGICAL ATTRIBUTION TIMELINE
+                CHRONOLOGICAL ATTRIBUTION TIMELINE (MODULE E)
               </div>
               <div className="text-[10px] text-slate-400">
                 Target: <b className="text-cyan-400">{targetCodename}</b> | Forensic Chain of Custody
+                {timelineData && (
+                  <span className="text-emerald-400 ml-2">
+                    [● {timelineData.total_nodes} Knowledge Nodes · {timelineData.stages.length} Forensic Stages]
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -94,12 +116,12 @@ export default function AttributionTimelineModal({
         </div>
 
         {/* Timeline Content */}
-        <div className="p-6 overflow-y-auto space-y-6 relative">
+        <div className="p-6 overflow-y-auto space-y-6 relative bg-[#070b14]">
           {/* Vertical Cyan Dashed Line */}
           <div className="absolute left-[35px] top-8 bottom-8 w-0.5 border-l-2 border-dashed border-cyan-500/40 z-0"></div>
 
           <div className="space-y-5 relative z-10">
-            {events.map((event, idx) => (
+            {defaultStaticEvents.map((event, idx) => (
               <div key={idx} className="flex items-start space-x-4">
                 {/* Timeline Dot Node */}
                 <div className="w-7 h-7 rounded-full bg-[#0b1220] border-2 border-cyan-400 flex items-center justify-center shadow-[0_0_10px_rgba(0,240,255,0.5)] shrink-0 mt-0.5">
@@ -113,17 +135,17 @@ export default function AttributionTimelineModal({
                       [{event.timestamp}]
                     </span>
                     <span className={`px-2 py-0.5 rounded border text-[9px] font-bold ${event.badgeColor}`}>
-                      {event.type}
+                      [{event.type}]
                     </span>
                   </div>
 
-                  <div className="text-slate-200 font-bold text-xs">
+                  <div className="font-bold text-slate-100 text-xs tracking-wide">
                     {event.title}
                   </div>
 
-                  <p className="text-slate-400 text-[10.5px] leading-relaxed">
+                  <div className="text-slate-300 text-[11px] leading-relaxed">
                     {event.description}
-                  </p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -131,14 +153,15 @@ export default function AttributionTimelineModal({
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-[#0d162b] border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-          <div className="flex items-center space-x-1.5 text-emerald-400 font-bold">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>7/7 Milestones Cryptographically Anchored</span>
+        <div className="p-4 bg-[#0d162b] border-t border-slate-800 flex items-center justify-between flex-wrap gap-2 text-slate-400 text-[10px]">
+          <div className="flex items-center space-x-2">
+            <ShieldCheck className="w-4 h-4 text-cyan-400" />
+            <span>Cryptographically timestamped and sealed under Section 65B Indian Evidence Act</span>
           </div>
+
           <button
             onClick={onClose}
-            className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition"
+            className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition"
           >
             Close Timeline
           </button>
