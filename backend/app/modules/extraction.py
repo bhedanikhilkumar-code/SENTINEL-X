@@ -51,15 +51,65 @@ def validate_btc(addr: str) -> float:
     return 0.95 if _b58_decode_check(addr) else 0.4
 
 
-def validate_eth(addr: str) -> float:
-    """FIX (bug 5): honest confidence — previously claimed 0.95 'assuming EIP-55
-    valid' without verifying the checksum, which is misleading evidentiary weight.
-    Full keccak-256 EIP-55 verification needs an extra dependency; until then we
-    report a lower heuristic confidence and flag it."""
+def _keccak256(data: bytes) -> bytes:
+    """Pure-python Keccak-256 implementation for Ethereum EIP-55 checksums."""
+    RC = [
+        0x0000000000000001, 0x0000000000008082, 0x800000000000808A, 0x8000000080008000,
+        0x000000000000808B, 0x0000000080000001, 0x8000000080008081, 0x8000000000008009,
+        0x000000000000008A, 0x0000000000000088, 0x0000000080008009, 0x000000008000000A,
+        0x000000008000808B, 0x800000000000008B, 0x8000000000008089, 0x8000000000008003,
+        0x8000000000008002, 0x8000000000000080, 0x000000000000800A, 0x800000008000000A,
+        0x8000000080008081, 0x8000000000008080, 0x0000000080000001, 0x8000000080008008
+    ]
+    r = 136
+    pad_len = r - (len(data) % r)
+    padded = data + (b'\x81' if pad_len == 1 else b'\x01' + b'\x00' * (pad_len - 2) + b'\x80')
+    state = [0] * 25
+    for offset in range(0, len(padded), r):
+        block = padded[offset:offset+r]
+        for i in range(r // 8):
+            state[i] ^= int.from_bytes(block[i*8:(i+1)*8], 'little')
+        for round_idx in range(24):
+            C = [state[x] ^ state[x+5] ^ state[x+10] ^ state[x+15] ^ state[x+20] for x in range(5)]
+            D = [C[(x+4)%5] ^ (((C[(x+1)%5] << 1) & 0xFFFFFFFFFFFFFFFF) | (C[(x+1)%5] >> 63)) for x in range(5)]
+            for i in range(25):
+                state[i] ^= D[i % 5]
+            rot = [0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43, 25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14]
+            pi = [0, 10, 20, 5, 15, 16, 1, 11, 21, 6, 7, 17, 2, 12, 22, 23, 8, 18, 3, 13, 14, 24, 9, 19, 4]
+            B = [0] * 25
+            for i in range(25):
+                B[pi[i]] = ((state[i] << rot[i]) & 0xFFFFFFFFFFFFFFFF) | (state[i] >> (64 - rot[i]) if rot[i] else 0)
+            for y in range(5):
+                for x in range(5):
+                    state[x + 5*y] = B[x + 5*y] ^ ((~B[(x+1)%5 + 5*y]) & B[(x+2)%5 + 5*y])
+            state[0] ^= RC[round_idx]
+    return b''.join(state[i].to_bytes(8, 'little') for i in range(4))
+
+
+def _eip55_checksum(addr: str) -> bool:
+    """Cryptographically verifies Ethereum mixed-case EIP-55 checksum."""
+    if not addr.startswith("0x") or len(addr) != 42:
+        return False
     body = addr[2:]
-    if body != body.lower() and body != body.upper():
-        return 0.8  # mixed-case present but checksum NOT cryptographically verified
-    return 0.6  # all-lower/all-upper: no checksum information at all
+    body_lower = body.lower()
+    h = _keccak256(body_lower.encode("ascii")).hex()
+    for i, c in enumerate(body):
+        if c.isalpha():
+            is_upper = int(h[i], 16) >= 8
+            if is_upper and not c.isupper():
+                return False
+            if not is_upper and not c.islower():
+                return False
+    return True
+
+
+def validate_eth(addr: str) -> float:
+    """Validate ETH address using cryptographic EIP-55 checksum."""
+    body = addr[2:]
+    has_mixed = body != body.lower() and body != body.upper()
+    if has_mixed:
+        return 0.95 if _eip55_checksum(addr) else 0.35
+    return 0.7  # all-lowercase valid hex format
 
 
 def validate_trx(addr: str) -> float:

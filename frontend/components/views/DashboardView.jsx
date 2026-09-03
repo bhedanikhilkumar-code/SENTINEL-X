@@ -113,7 +113,10 @@ export default function DashboardView({ cases, onSelectCase, onUpdateStatus, onN
 
           {/* Simulated 24-Hour Activity Bars */}
           <div className="pt-2">
-            <div className="grid grid-cols-24 gap-1 items-end h-28 px-2 bg-slate-950/60 rounded-lg border border-slate-800/60 p-2">
+            <div
+              style={{ display: "grid", gridTemplateColumns: "repeat(24, minmax(0, 1fr))" }}
+              className="grid grid-cols-24 gap-1 items-end h-28 px-2 bg-slate-950/60 rounded-lg border border-slate-800/60 p-2"
+            >
               {[
                 { h: 0, v: 5 }, { h: 1, v: 8 }, { h: 2, v: 12 }, { h: 3, v: 45 },
                 { h: 4, v: 85 }, { h: 5, v: 92 }, { h: 6, v: 65 }, { h: 7, v: 25 },
@@ -125,17 +128,19 @@ export default function DashboardView({ cases, onSelectCase, onUpdateStatus, onN
                 const isPeak = bar.h >= 3 && bar.h <= 6;
                 return (
                   <div key={bar.h} className="flex flex-col items-center h-full justify-end group relative">
-                    <div
-                      style={{ height: `${bar.v}%` }}
-                      className={`w-full rounded-t-sm transition-all duration-300 ${
-                        isPeak
-                          ? "bg-gradient-to-t from-cyan-600 to-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.6)]"
-                          : "bg-slate-700/60 hover:bg-slate-500"
-                      }`}
-                    ></div>
-                    <span className="text-[8px] font-mono text-slate-400 mt-1">{bar.h}</span>
+                    <div className="w-full flex-1 flex items-end">
+                      <div
+                        style={{ height: `${bar.v}%` }}
+                        className={`w-full rounded-t-sm transition-all duration-300 ${
+                          isPeak
+                            ? "bg-gradient-to-t from-cyan-600 to-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.6)]"
+                            : "bg-slate-700/60 hover:bg-slate-500"
+                        }`}
+                      ></div>
+                    </div>
+                    <span className="text-[8px] font-mono text-slate-400 mt-1 select-none leading-none">{bar.h}</span>
                     {/* Tooltip on hover */}
-                    <div className="opacity-0 group-hover:opacity-100 transition absolute bottom-full mb-1 bg-slate-900 border border-slate-700 text-[10px] font-mono rounded px-1.5 py-0.5 text-slate-200 pointer-events-none z-10 whitespace-nowrap">
+                    <div className="opacity-0 group-hover:opacity-100 transition absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 text-[10px] font-mono rounded px-1.5 py-0.5 text-slate-200 pointer-events-none z-20 whitespace-nowrap shadow-md">
                       {bar.h}:00 UTC ({bar.v} events)
                     </div>
                   </div>
