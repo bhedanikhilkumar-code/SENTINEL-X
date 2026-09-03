@@ -7,6 +7,7 @@ from app.modules.graph_service import graph_service
 from app.modules.stylometry import stylometric_similarity, hour_histogram
 from app.modules.audit import append_audit, verify_chain
 from app.models import RawDocument as Document
+from app.security.auth import require_role
 
 router = APIRouter(prefix="/api", tags=["graph", "audit"])
 
@@ -36,6 +37,50 @@ def get_path(src: str, dst: str, db: Session = Depends(get_db)):
 def get_centrality(db: Session = Depends(get_db)):
     graph_service.rebuild_from_db(db)
     return graph_service.centrality()
+
+
+@router.get("/graph/communities")
+def get_communities(db: Session = Depends(get_db)):
+    """PRD §3.E: Louvain community detection — auto-cluster likely-related aliases."""
+    import networkx as nx
+    graph_service.rebuild_from_db(db)
+    undirected = graph_service.g.to_undirected()
+    if len(undirected) == 0:
+        return {"communities": []}
+    comms = nx.community.louvain_communities(undirected, seed=42)
+    return {"communities": [
+        {"size": len(c),
+         "nodes": [{"id": n, "type": graph_service.g.nodes[n].get("type", "unknown"),
+                    "label": graph_service.g.nodes[n].get("label", n)} for n in sorted(c)]}
+        for c in sorted(comms, key=len, reverse=True)]}
+
+
+class AnnotationBody(BaseModel):
+    node_id: str
+    note: str
+
+
+@router.post("/graph/annotations")
+def add_annotation(body: AnnotationBody, db: Session = Depends(get_db),
+                   user=Depends(require_role("analyst"))):
+    from app.models import GraphAnnotation
+    actor = user.id if user else "analyst_demo"
+    ann = GraphAnnotation(node_id=body.node_id, note=body.note, author=actor)
+    db.add(ann)
+    db.commit()
+    db.refresh(ann)
+    append_audit(db, actor=actor, action="graph.annotated", entity_ids=[body.node_id], detail=body.note)
+    return {"id": ann.id, "node_id": ann.node_id, "note": ann.note, "author": ann.author}
+
+
+@router.get("/graph/annotations")
+def list_annotations(node_id: str | None = None, db: Session = Depends(get_db)):
+    from app.models import GraphAnnotation
+    q = db.query(GraphAnnotation)
+    if node_id:
+        q = q.filter_by(node_id=node_id)
+    return [{"id": a.id, "node_id": a.node_id, "note": a.note, "author": a.author,
+             "created_at": str(a.created_at)} for a in q.order_by(GraphAnnotation.created_at).all()]
 
 
 class CompareBody(BaseModel):

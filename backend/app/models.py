@@ -89,6 +89,16 @@ class Hypothesis(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_iso)
 
 
+class GraphAnnotation(Base):
+    """Module E analyst tool: node/edge annotations (PRD 3.E)."""
+    __tablename__ = "graph_annotations"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=uid)
+    node_id: Mapped[str] = mapped_column(String, index=True)
+    note: Mapped[str] = mapped_column(Text)
+    author: Mapped[str] = mapped_column(String, default="analyst_demo")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_iso)
+
+
 class AuditEntry(Base):
     """Module F: tamper-evident hash-chained log."""
     __tablename__ = "audit_log"

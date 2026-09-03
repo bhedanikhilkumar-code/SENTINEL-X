@@ -6,6 +6,7 @@ python-gnupg==0.5.3
 networkx==3.3
 python-multipart==0.0.9
 reportlab==4.2.2
+pyjwt==2.9.0
 httpx==0.27.2
 beautifulsoup4==4.12.3
 stem==1.8.2

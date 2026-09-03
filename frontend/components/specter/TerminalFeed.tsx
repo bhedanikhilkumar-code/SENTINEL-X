@@ -6,8 +6,9 @@ interface TerminalFeedProps {
 }
 
 export default function TerminalFeed({ actorCodename }: TerminalFeedProps) {
-  const terminalEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const isInitialMount = useRef(true);
 
   const [logs, setLogs] = useState<string[]>([
     "[17:40:02 UTC] [INGEST] Scraped post #4892 from Dread forum /d/DarknetMarketNoobs",
@@ -23,10 +24,17 @@ export default function TerminalFeed({ actorCodename }: TerminalFeedProps) {
     "[17:40:28 UTC] [ALERT] Multi-signal attribution confidence threshold exceeded: 94.8% (Target: Pavel K.)",
   ]);
 
-  // Auto-scroll to bottom
+  // Safely auto-scroll ONLY the horizontal ticker container without scrolling the window/page
   useEffect(() => {
-    if (!isPaused && terminalEndRef.current) {
-      terminalEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (!isPaused && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        left: scrollContainerRef.current.scrollWidth,
+        behavior: "smooth",
+      });
     }
   }, [logs, isPaused]);
 
@@ -59,7 +67,10 @@ export default function TerminalFeed({ actorCodename }: TerminalFeedProps) {
       </div>
 
       {/* Ticker / Scrolling Console View */}
-      <div className="flex-1 overflow-x-auto px-4 overflow-y-hidden whitespace-nowrap scrollbar-none flex items-center">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-x-auto px-4 overflow-y-hidden whitespace-nowrap scrollbar-none flex items-center"
+      >
         <div className="flex items-center space-x-4 text-[11px]">
           {logs.slice(-4).map((log, idx) => {
             const isAlert = log.includes("[ALERT]") || log.includes("[DE-CLOAK]");
@@ -79,7 +90,6 @@ export default function TerminalFeed({ actorCodename }: TerminalFeedProps) {
               </span>
             );
           })}
-          <div ref={terminalEndRef} />
         </div>
       </div>
 

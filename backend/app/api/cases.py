@@ -8,6 +8,8 @@ from app.modules.audit import append_audit
 from app.modules.correlation import compute_c_total
 from app.modules.stylometry import stylometric_similarity, hour_histogram
 from app.modules.dossier import generate_dossier_pdf
+from app.security.auth import require_role
+from app.security.auth import require_role
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
 
@@ -115,10 +117,13 @@ def update_status(case_id: str, body: StatusUpdate, db: Session = Depends(get_db
 
 
 @router.get("/{case_id}/dossier/pdf")
-def export_dossier_pdf(case_id: str, actor: str = "analyst_demo", db: Session = Depends(get_db)):
+def export_dossier_pdf(case_id: str, actor: str = "soc_lead_demo", db: Session = Depends(get_db),
+                       user=Depends(require_role("soc_lead"))):
     case = db.get(Case, case_id)
     if not case:
         raise HTTPException(404, "Case not found")
+    if user:  # authenticated export: audit the real actor, not a query param
+        actor = user.id
     
     pdf_bytes = generate_dossier_pdf(case, db)
     

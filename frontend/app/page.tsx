@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { TARGET_ACTORS, ActorData } from "../lib/threatData";
 
@@ -53,6 +53,13 @@ export default function SpecterTracePage() {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
 
   const currentActor: ActorData = TARGET_ACTORS[selectedActorId] || TARGET_ACTORS["phantom-krypt"];
+
+  // Ensure view is securely locked to the top on page load/refresh
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
+  }, []);
 
   const handleTriggerPdf = () => {
     generateNtroPdfDossier(currentActor, "Analyst: Priya S.");

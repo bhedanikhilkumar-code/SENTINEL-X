@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db import init_db
 from app.api import cases, ingest, workbench
+from app.api import auth as auth_api
 
 app = FastAPI(title="SENTINEL-X", version="0.1.0",
               description="Dark Web Threat Actor De-Anonymization Platform (SIH26151)")
@@ -10,6 +11,7 @@ app = FastAPI(title="SENTINEL-X", version="0.1.0",
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000", "http://localhost:5173"],
                    allow_methods=["*"], allow_headers=["*"])
 
+app.include_router(auth_api.router)
 app.include_router(cases.router)
 app.include_router(ingest.router)
 app.include_router(workbench.router)

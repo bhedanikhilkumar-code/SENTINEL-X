@@ -9,6 +9,7 @@ from app.models import RawDocument as Document, Artifact, Case
 from app.modules.extraction import extract_artifacts
 from app.modules.audit import append_audit
 from app.modules.stylometry import extract_features, embed_document
+from app.security.auth import require_role
 
 router = APIRouter(prefix="/api/ingest", tags=["ingest"])
 
@@ -85,12 +86,14 @@ class LiveIngestBody(BaseModel):
 
 
 @router.post("/live")
-def live_ingest(body: LiveIngestBody, db: Session = Depends(get_db)):
+def live_ingest(body: LiveIngestBody, db: Session = Depends(get_db),
+                user=Depends(require_role("analyst"))):
     """Module A live path: Tor-collected URL → existing hash→dedup→extract pipeline.
 
     PRD boundaries preserved:
     - Egress ONLY via Tor (no direct fallback — collector.py enforces this).
     - CAPTCHA blocks are queued for human-in-the-loop resolution, audited, never auto-defeated.
+    - RBAC: analyst+ only (PRD §4.2); export of a real analyst id into the audit chain.
     """
     from app.modules import collector
     result = collector.collect(body.url, rotate=body.rotate_circuit)
