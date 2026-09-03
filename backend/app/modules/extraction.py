@@ -52,11 +52,14 @@ def validate_btc(addr: str) -> float:
 
 
 def validate_eth(addr: str) -> float:
-    """EIP-55 mixed-case checksum if present; all-lower/upper → weaker confidence."""
+    """FIX (bug 5): honest confidence — previously claimed 0.95 'assuming EIP-55
+    valid' without verifying the checksum, which is misleading evidentiary weight.
+    Full keccak-256 EIP-55 verification needs an extra dependency; until then we
+    report a lower heuristic confidence and flag it."""
     body = addr[2:]
     if body != body.lower() and body != body.upper():
-        return 0.95  # assume EIP-55 valid (full keccak optional in MVP)
-    return 0.7
+        return 0.8  # mixed-case present but checksum NOT cryptographically verified
+    return 0.6  # all-lower/all-upper: no checksum information at all
 
 
 def validate_trx(addr: str) -> float:
@@ -69,19 +72,15 @@ PGP_FPR_RE = re.compile(r"\b([A-F0-9]{40}|[A-F0-9]{16})\b")
 
 
 def parse_pgp_block(block_body: str) -> dict:
-    """Extract key metadata from armor without full gpg dependency (pure-python MVP)."""
+    """Extract key metadata from armor (pure-python MVP).
+
+    FIX (bug 6): removed dead line-iteration loop; detect truncated/partial
+    blocks (PRD edge case) instead of silently mis-parsing them.
+    """
     key_id = fpr = None
     created = None
     uids = []
-    for line in block_body.splitlines():
-        line = line.strip()
-        if line.startswith(":") or not line or line.startswith("="):
-            continue
-        if line.lower().startswith("comment"):
-            continue
-    # Armor header parsing: real keys carry "Version"; key IDs come from decoded packets.
-    # For the demo corpus we support the common convention where the key id/fpr is
-    # embedded as a comment line, plus full-fingerprint regex scan of the block.
+    truncated = "..." in block_body or len(block_body) < 80
     m = re.search(r"Key\s*(?:ID|fingerprint)\s*[:=]\s*([A-Fa-f0-9]{16,40})", block_body)
     if m:
         val = m.group(1).upper()
@@ -95,7 +94,8 @@ def parse_pgp_block(block_body: str) -> dict:
         created = c.group(1)
     for u in re.findall(r"<([\w.+-]+@[\w.-]+)>", block_body):
         uids.append(u)
-    return {"key_id": key_id, "fingerprint": fpr, "created": created, "user_ids": uids}
+    return {"key_id": key_id, "fingerprint": fpr, "created": created, "user_ids": uids,
+            "partial": truncated}
 
 
 SSH_FPR_RE = re.compile(r"(?:SHA256|MD5)[:\s]+([A-Za-z0-9+/=]{20,60})", re.M)
@@ -119,7 +119,9 @@ def extract_artifacts(raw_text: str, source_doc_id: str) -> list[dict]:
     for m in PGP_BLOCK_RE.finditer(text):
         meta = parse_pgp_block(m.group(1))
         if meta["key_id"] or meta["fingerprint"]:
-            add("pgp_key", meta.get("fingerprint") or meta["key_id"], meta, 0.95)
+            # PRD edge case: partial/truncated keys get flagged + lower confidence
+            conf = 0.6 if meta.get("partial") else 0.95
+            add("pgp_key", meta.get("fingerprint") or meta["key_id"], meta, conf)
     for m in PGP_FPR_RE.finditer(text):
         val = m.group(1)
         if len(val) in (16, 40):

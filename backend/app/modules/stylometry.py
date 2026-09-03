@@ -143,19 +143,48 @@ def infer_timezone(hist: list[int]) -> str:
 
 
 def stylometric_similarity(text_a: str, text_b: str, tz_a=None, tz_b=None) -> dict:
-    """S_style per PRD formula, calibrated weights (Σw=1), capped at 0.85."""
+    """S_style per PRD formula, capped at 0.85.
+
+    FIX (bug 1&2): weights renormalize over AVAILABLE components — if timezone
+    histograms are missing, w4 no longer silently deflates the score; and when
+    histograms ARE provided they are the real hour-of-day distributions.
+    """
     fa, fb = extract_features(text_a), extract_features(text_b)
     if fa.get("error") or fb.get("error"):
         return {"s_style": 0.0, "low_sample_confidence": True, "reason": "insufficient text"}
-    w1, w2, w3, w4 = 0.4, 0.3, 0.2, 0.1
+    has_tz = bool(tz_a) and bool(tz_b) and sum(tz_a) > 0 and sum(tz_b) > 0
+    weights = {"embedding": 0.4, "func_words": 0.3, "punct": 0.2, "tz": 0.1}
+    if not has_tz:
+        # renormalize the three available weights to Σ=1 (was: silent 10% loss)
+        total = weights["embedding"] + weights["func_words"] + weights["punct"]
+        weights = {k: (v / total if k != "tz" else 0.0) for k, v in weights.items()}
     c = cosine(_feature_vector(fa), _feature_vector(fb))
     jsim = 1 - js_divergence(fa["function_word_dist"], fb["function_word_dist"])
     psim = punctuation_similarity(fa["punctuation"], fb["punctuation"])
-    tsim = timezone_overlap(tz_a or [], tz_b or [])
-    s = w1 * c + w2 * jsim + w3 * psim + w4 * tsim
+    tsim = timezone_overlap(tz_a or [], tz_b or []) if has_tz else 0.0
+    s = (weights["embedding"] * c + weights["func_words"] * jsim
+         + weights["punct"] * psim + weights["tz"] * tsim)
     return {
         "s_style": round(min(0.85, s), 4),
         "components": {"embedding_cosine": round(c, 4), "function_word_sim": round(jsim, 4),
                        "punctuation_sim": round(psim, 4), "timezone_overlap": round(tsim, 4)},
+        "weights_used": {k: round(v, 3) for k, v in weights.items()},
         "low_sample_confidence": fa["n_words"] < 50 or fb["n_words"] < 50,
     }
+
+
+def hour_histogram(posted_dates) -> list[int]:
+    """FIX (bug 2): 24-bin UTC hour-of-day histogram from Document.posted_at values.
+
+    This feeds timezone_overlap / infer_timezone — previously the PRD's
+    temporal-inference feature was computed nowhere.
+    """
+    hist = [0] * 24
+    for d in posted_dates:
+        if d is not None:
+            try:
+                hist[d.hour] += 1
+            except AttributeError:
+                pass  # non-datetime entry — skip rather than crash
+    return hist
+

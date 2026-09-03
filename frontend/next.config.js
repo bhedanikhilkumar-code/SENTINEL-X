@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8100";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

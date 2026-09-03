@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.db import get_db
 from app.modules.graph_service import graph_service
-from app.modules.stylometry import stylometric_similarity
+from app.modules.stylometry import stylometric_similarity, hour_histogram
 from app.modules.audit import append_audit, verify_chain
 from app.models import RawDocument as Document
 
@@ -48,7 +48,11 @@ def compare_documents(body: CompareBody, db: Session = Depends(get_db)):
     da, dbb = db.get(Document, body.doc_a), db.get(Document, body.doc_b)
     if not da or not dbb:
         raise HTTPException(404, "document not found")
-    return stylometric_similarity(da.raw_text, dbb.raw_text)
+    # FIX (bug 2): hour-of-day histograms per handle feed the timezone component
+    def _hist(handle):
+        return hour_histogram([d.posted_at for d in db.query(Document).filter_by(author_handle=handle).all()])
+    return stylometric_similarity(da.raw_text, dbb.raw_text,
+                                  tz_a=_hist(da.author_handle), tz_b=_hist(dbb.author_handle))
 
 
 @router.get("/audit")
@@ -63,3 +67,17 @@ def get_audit_log(db: Session = Depends(get_db)):
 @router.get("/audit/verify")
 def verify_audit_chain(db: Session = Depends(get_db)):
     return verify_chain(db)
+
+
+class AnnotationBody(BaseModel):
+    node_id: str
+    note: str
+    actor: str = "analyst_demo"
+
+
+@router.post("/graph/annotate")
+def annotate_node(body: AnnotationBody, db: Session = Depends(get_db)):
+    entry = append_audit(db, actor=body.actor, action="node.annotated", entity_ids=[body.node_id],
+                         detail=f"[{body.node_id}] {body.note}")
+    return {"status": "ok", "node_id": body.node_id, "note": body.note, "seq": entry.seq}
+

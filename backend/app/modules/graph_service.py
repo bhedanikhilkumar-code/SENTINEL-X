@@ -75,15 +75,26 @@ class GraphService:
             self.g.add_edge("handle:DarkViper", "handle:vk_devtools", relation="stylometric_match", confidence=0.68)
 
     def neighbors(self, node_id: str) -> list[dict]:
+        """FIX (bug 3): unified neighbor entries.
+
+        Previously in-edge entries lacked to_label/to_type and pointed the
+        frontend back at the queried node itself (self-pivot bug). Now every
+        entry describes the OTHER node consistently, plus edge direction.
+        """
         if node_id not in self.g:
             return []
         out = []
+
+        def other(sid: str, did: str, direction: str, data: dict) -> dict:
+            nd = self.g.nodes[did]
+            return {"node": did, "label": nd.get("label", did), "type": nd.get("type", "unknown"),
+                    "relation": data.get("relation", ""), "confidence": data.get("confidence", 0.5),
+                    "direction": direction}
+
         for _, tgt, data in self.g.edges(node_id, data=True):
-            out.append({"from": node_id, "to": tgt, **data,
-                        "to_label": self.g.nodes[tgt].get("label", tgt), "to_type": self.g.nodes[tgt].get("type")})
+            out.append(other(node_id, tgt, "outgoing", data))
         for src, _, data in self.g.in_edges(node_id, data=True):
-            out.append({"from": src, "to": node_id, **data,
-                        "from_label": self.g.nodes[src].get("label", src), "from_type": self.g.nodes[src].get("type")})
+            out.append(other(node_id, src, "incoming", data))
         return out
 
     def shortest_path(self, src: str, dst: str) -> dict | None:
@@ -99,11 +110,24 @@ class GraphService:
         return [{"id": n, "betweenness": round(v, 4), **self.g.nodes[n]} for n, v in ranked if v > 0]
 
     def to_cytoscape(self) -> dict:
-        nodes = [{"data": {"id": n, "label": d.get("label", n), "type": d.get("type", "unknown")}}
-                 for n, d in self.g.nodes(data=True)]
-        edges = [{"data": {"id": f"{u}->{v}:{i}", "source": u, "target": v,
-                           "relation": d.get("relation", ""), "confidence": d.get("confidence", 0.5)}}
-                 for i, (u, v, d) in enumerate(self.g.edges(data=True))]
+        bc = nx.betweenness_centrality(self.g.to_undirected())
+        nodes = []
+        for n, d in self.g.nodes(data=True):
+            ndata = dict(d)
+            ndata["id"] = n
+            ndata["label"] = d.get("label", n)
+            ndata["type"] = d.get("type", "unknown")
+            ndata["betweenness"] = round(bc.get(n, 0.0), 4)
+            nodes.append({"data": ndata})
+        edges = []
+        for i, (u, v, d) in enumerate(self.g.edges(data=True)):
+            edata = dict(d)
+            edata["id"] = f"{u}->{v}:{i}"
+            edata["source"] = u
+            edata["target"] = v
+            edata["relation"] = d.get("relation", "")
+            edata["confidence"] = d.get("confidence", 0.5)
+            edges.append({"data": edata})
         return {"nodes": nodes, "edges": edges}
 
 

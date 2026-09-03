@@ -6,7 +6,7 @@ from app.db import get_db
 from app.models import Case, User, RawDocument as Document, Artifact, Hypothesis
 from app.modules.audit import append_audit
 from app.modules.correlation import compute_c_total
-from app.modules.stylometry import stylometric_similarity
+from app.modules.stylometry import stylometric_similarity, hour_histogram
 from app.modules.dossier import generate_dossier_pdf
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
@@ -74,7 +74,13 @@ def add_hypothesis(case_id: str, body: HypothesisCreate, db: Session = Depends(g
         dbb = db.get(Document, body.stylometric_pair[1])
         if not da or not dbb:
             raise HTTPException(400, "stylometric_pair documents not found")
-        sim = stylometric_similarity(da.raw_text, dbb.raw_text)
+        # FIX (bug 2): build real hour-of-day histograms from each handle's
+        # full posting history — the PRD temporal feature now actually feeds S_style.
+        def _hist(handle):
+            dates = [d.posted_at for d in db.query(Document).filter_by(author_handle=handle).all()]
+            return hour_histogram(dates)
+        sim = stylometric_similarity(da.raw_text, dbb.raw_text,
+                                     tz_a=_hist(da.author_handle), tz_b=_hist(dbb.author_handle))
         signals.append({"signal_type": "stylometric", "ci": sim["s_style"],
                         "source_doc_ids": body.stylometric_pair, "detail": sim})
     result = compute_c_total(signals)

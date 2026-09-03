@@ -32,9 +32,12 @@ def compute_c_total(signals: list[dict]) -> dict:
     breakdown = []
     # Group by source docs to detect correlation
     doc_usage: dict[str, int] = {}
+    type_usage: dict[str, int] = {}
     for s in signals:
         for d in s.get("source_doc_ids", []):
             doc_usage[d] = doc_usage.get(d, 0) + 1
+        st = s["signal_type"]
+        type_usage[st] = type_usage.get(st, 0) + 1
 
     c_total = 0.0
     for s in signals:
@@ -48,22 +51,32 @@ def compute_c_total(signals: list[dict]) -> dict:
                 ci *= 0.4  # handle-popularity prior down-weight
         if stype == "stylometric":
             ci = min(0.85, float(ci))  # hard cap per PRD
-        # independence adjustment: Wi = 1 / sqrt(#signals sharing any source doc)
-        shared = max((doc_usage.get(d, 0) for d in s.get("source_doc_ids", [])), default=1)
-        wi = 1.0 / math.sqrt(max(shared, 1))
+        # Independence adjustment — two correlated-signal sources:
+        #   (a) signals sharing a source document, and
+        #   (b) repeated signals of the SAME type (FIX bug 4: e.g. two stylometric
+        #       scores over overlapping corpora are not independent evidence)
+        shared_doc = max((doc_usage.get(d, 0) for d in s.get("source_doc_ids", [])), default=1)
+        same_type = type_usage.get(stype, 1)
+        corr = max(shared_doc, same_type, 1)
+        wi = 1.0 / math.sqrt(corr)
         contrib = ci * wi
         c_total = 1 - (1 - c_total) * (1 - contrib)
+        notes = []
+        if shared_doc > 1:
+            notes.append(f"{shared_doc} signals share a source document")
+        if same_type > 1:
+            notes.append(f"{same_type} signals of same type '{stype}' (redundant)")
         breakdown.append({
             "signal_type": stype,
             "ci": round(ci, 4),
             "wi": round(wi, 4),
             "contribution": round(contrib, 4),
-            "independence_note": f"{shared} signal(s) share this source" if shared > 1 else "independent",
+            "independence_note": "; ".join(notes) if notes else "independent",
             "detail": s.get("detail", {}),
         })
     return {
         "c_total": round(c_total, 4),
         "c_total_pct": f"{round(c_total * 100, 1)}%",
         "breakdown": breakdown,
-        "method": "C_total = 1 − Π(1 − Ci·Wi) with source-document independence adjustment",
+        "method": "C_total = 1 − Π(1 − Ci·Wi) with source-document AND same-type independence adjustment",
     }
