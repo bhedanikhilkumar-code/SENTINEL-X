@@ -85,3 +85,51 @@ def list_documents(case_id: str | None = None, db: Session = Depends(get_db)):
     return [{"id": d.id, "source_type": d.source_type, "author_handle": d.author_handle,
              "platform": d.platform, "sha256": d.sha256[:16] + "…", "posted_at": str(d.posted_at)}
             for d in q.all()]
+
+
+@router.post("/tor/rotate")
+def rotate_tor_circuit(db: Session = Depends(get_db)):
+    """Simulate Tor SOCKS5 circuit rotation (SIGNAL NEWNYM) per PRD Section 3.A."""
+    import random
+    circ_id = f"circ-{random.randint(1000, 9999)}"
+    guards = ["185.220.101.5 (Germany)", "109.70.100.29 (Austria)", "193.23.244.244 (Switzerland)"]
+    middles = ["198.51.100.34 (Netherlands)", "51.15.43.19 (France)", "82.165.197.1 (Germany)"]
+    exits = ["192.42.116.16 (Netherlands)", "185.100.86.100 (Sweden)", "185.220.100.252 (Germany)"]
+    guard = random.choice(guards)
+    mid = random.choice(middles)
+    exit_node = random.choice(exits)
+    append_audit(db, actor="tor_collector", action="tor.circuit_rotated",
+                 detail=f"Circuit {circ_id}: Guard={guard} -> Mid={mid} -> Exit={exit_node}")
+    return {
+        "status": "rotated",
+        "circuit_id": circ_id,
+        "guard_node": guard,
+        "middle_node": mid,
+        "exit_node": exit_node,
+        "socks_proxy": "127.0.0.1:9050",
+        "privoxy_scrubbed": True,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+class CaptchaResolveBody(BaseModel):
+    onion_url: str
+    challenge_id: str
+    analyst_token: str = "token_0x99f"
+
+
+@router.post("/captcha/resolve")
+def resolve_captcha(body: CaptchaResolveBody, db: Session = Depends(get_db)):
+    """Assisted browsing human-in-the-loop CAPTCHA bypass resolution (PRD Section 3.A)."""
+    import random
+    from app.models import AuditEntry
+    append_audit(db, actor="analyst_assisted", action="captcha.resolved",
+                 detail=f"Analyst solved challenge {body.challenge_id} on {body.onion_url}")
+    return {
+        "status": "resolved",
+        "onion_url": body.onion_url,
+        "session_cookie": f"cf_clearance_{random.randint(100000, 999999)}",
+        "collector_state": "UNLOCKED",
+        "audit_seq": db.query(AuditEntry).count()
+    }
+

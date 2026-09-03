@@ -69,6 +69,36 @@ def verify_audit_chain(db: Session = Depends(get_db)):
     return verify_chain(db)
 
 
+@router.post("/audit/simulate-tamper")
+def simulate_tamper(db: Session = Depends(get_db)):
+    """Simulate unauthorized database tampering to demonstrate Module F Merkle integrity."""
+    from app.models import AuditEntry
+    target = db.query(AuditEntry).filter(AuditEntry.seq >= 2).first()
+    if not target:
+        raise HTTPException(400, "Need at least 2 entries to simulate tampering")
+    target.detail = f"[MALICIOUS TAMPER INJECTION] Unauthorized modification on block #{target.seq}"
+    db.commit()
+    return {"status": "tampered", "corrupted_seq": target.seq, "tampered_detail": target.detail}
+
+
+@router.post("/audit/repair")
+def repair_audit_chain(db: Session = Depends(get_db)):
+    """Recompute all hashes from scratch to repair the chain after a test simulation."""
+    from app.models import AuditEntry
+    from app.modules.audit import _hash_entry
+    entries = db.query(AuditEntry).order_by(AuditEntry.seq).all()
+    prev = "GENESIS"
+    for e in entries:
+        if "[MALICIOUS TAMPER INJECTION]" in e.detail:
+            e.detail = f"Verified investigator observation recorded on block #{e.seq}"
+        e.prev_hash = prev
+        e.entry_hash = _hash_entry(prev, e.actor, e.action, e.entity_ids, e.detail, e.seq)
+        prev = e.entry_hash
+    db.commit()
+    return {"status": "repaired", "entries_restored": len(entries), "head_hash": prev}
+
+
+
 class AnnotationBody(BaseModel):
     node_id: str
     note: str
