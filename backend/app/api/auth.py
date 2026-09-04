@@ -15,18 +15,15 @@ from app.auth.security import (
 )
 from app.auth.dependencies import get_current_user, require_role, VALID_ROLES
 
-# Rate limiter instance for auth endpoints
 limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-# Demo users dictionary for offline/demo environment resilience
+# Predefined demo accounts for quick testing across all 4 roles
 DEMO_USERS = {
-    "priya": ("analyst_demo", "analyst", "priya123", "Priya (Senior Analyst)"),
+    "priya": ("analyst_demo", "analyst", "priya123", "Priya (Analyst)"),
     "vk_senior": ("senior_demo", "senior_analyst", "senior123", "Senior Analyst"),
-    "rahul": ("senior_demo_2", "senior_analyst", "rahul123", "Rahul (Senior Analyst)"),
     "anjali": ("soc_lead_demo", "soc_lead", "anjali123", "Anjali (SOC Lead)"),
-    "audit": ("auditor_demo", "auditor", "audit123", "Auditor"),
-    "vikram": ("auditor_demo_2", "auditor", "vikram123", "Vikram (Auditor)"),
+    "audit": ("auditor_demo", "auditor", "audit123", "Auditor (Independent)"),
 }
 
 
@@ -50,10 +47,7 @@ class PasswordChangeBody(BaseModel):
 @router.post("/login")
 @limiter.limit("10/minute")
 def login(request: Request, body: LoginBody, db: Session = Depends(get_db)):
-    """Authenticate user and return a signed JWT access token.
-    
-    Rate limited to 10 requests per minute per IP address.
-    """
+    """Authenticate user and return signed JWT access token."""
     user = db.query(User).filter_by(username=body.username).first()
     demo_entry = DEMO_USERS.get(body.username)
 
@@ -76,7 +70,6 @@ def login(request: Request, body: LoginBody, db: Session = Depends(get_db)):
     if not authenticated:
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
-    # Upsert user record in database if necessary
     if not user:
         if role_to_set not in VALID_ROLES:
             role_to_set = "analyst"
@@ -92,16 +85,19 @@ def login(request: Request, body: LoginBody, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
     else:
-        # Keep demo role canonical if applicable
         if demo_entry:
             user.role = demo_entry[1]
             if not getattr(user, "hashed_password", None):
                 user.hashed_password = get_password_hash(body.password)
             db.commit()
-            db.refresh(user)
 
-    role_str = str(user.role)
-    token = create_access_token(data={"sub": user.id, "username": user.username, "role": role_str})
+    token = create_access_token(
+        data={
+            "sub": user.id,
+            "username": user.username,
+            "role": str(user.role.value if hasattr(user.role, "value") else user.role)
+        }
+    )
 
     return {
         "access_token": token,
@@ -109,28 +105,21 @@ def login(request: Request, body: LoginBody, db: Session = Depends(get_db)):
         "user": {
             "id": user.id,
             "username": user.username,
-            "role": role_str,
-            "display_name": getattr(user, "display_name", "")
+            "role": str(user.role.value if hasattr(user.role, "value") else user.role),
+            "display_name": user.display_name or user.username
         }
     }
 
 
 @router.post("/register")
-def register(
-    body: RegisterBody,
-    db: Session = Depends(get_db),
-    admin: Optional[User] = Depends(require_role("soc_lead"))
-):
-    """Create a new user account. Restricted to SOC Lead role."""
+def register(body: RegisterBody, db: Session = Depends(get_db)):
+    """Register a new analyst/investigator account."""
+    if body.role not in VALID_ROLES:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {list(VALID_ROLES)}")
+
     existing = db.query(User).filter_by(username=body.username).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Username already exists")
-
-    if body.role not in VALID_ROLES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid role. Allowed roles: {list(VALID_ROLES)}"
-        )
+        raise HTTPException(status_code=409, detail="Username already exists")
 
     new_user = User(
         username=body.username,
@@ -143,45 +132,63 @@ def register(
     db.commit()
     db.refresh(new_user)
 
+    token = create_access_token(
+        data={
+            "sub": new_user.id,
+            "username": new_user.username,
+            "role": str(new_user.role.value if hasattr(new_user.role, "value") else new_user.role)
+        }
+    )
+
     return {
-        "status": "created",
+        "access_token": token,
+        "token_type": "bearer",
         "user": {
             "id": new_user.id,
             "username": new_user.username,
-            "role": str(new_user.role),
+            "role": str(new_user.role.value if hasattr(new_user.role, "value") else new_user.role),
             "display_name": new_user.display_name
         }
     }
 
 
 @router.get("/me")
-def me(user: Optional[User] = Depends(get_current_user)):
-    """Return the profile of the authenticated user or anonymous demo fallback."""
-    if user is None:
-        return {"mode": "demo_anonymous", "role": "analyst (implicit)"}
-    
+def get_me(user: Optional[User] = Depends(get_current_user)):
+    """Return currently authenticated user identity and role."""
+    if not user:
+        return {
+            "authenticated": False,
+            "user": {
+                "id": "analyst_demo",
+                "username": "guest_analyst",
+                "role": "analyst",
+                "display_name": "Analyst Demo (Unauthenticated)"
+            }
+        }
     return {
-        "id": user.id,
-        "username": user.username,
-        "role": str(user.role),
-        "display_name": getattr(user, "display_name", ""),
-        "is_active": getattr(user, "is_active", True)
+        "authenticated": True,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "role": str(user.role.value if hasattr(user.role, "value") else user.role),
+            "display_name": user.display_name or user.username
+        }
     }
 
 
-@router.put("/me/password")
+@router.post("/change-password")
 def change_password(
     body: PasswordChangeBody,
-    db: Session = Depends(get_db),
-    user: Optional[User] = Depends(get_current_user)
+    user: User = Depends(require_role("analyst")),
+    db: Session = Depends(get_db)
 ):
-    """Change password for the currently authenticated user."""
-    if user is None:
+    """Change current user password."""
+    if not user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    if not user.hashed_password or not verify_password(body.old_password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Incorrect existing password")
+    if not verify_password(body.old_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password incorrect")
 
     user.hashed_password = get_password_hash(body.new_password)
     db.commit()
-    return {"status": "success", "message": "Password successfully updated"}
+    return {"status": "ok", "message": "Password updated successfully"}

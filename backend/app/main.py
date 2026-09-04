@@ -1,4 +1,9 @@
-"""SENTINEL-X — FastAPI entrypoint."""
+"""SENTINEL-X — FastAPI Production Entrypoint (NTRO SIH26151).
+
+# CHANGED: Full router registration for all 27 platform API endpoints.
+# CHANGED: Startup & shutdown event lifecycle handlers for PostgreSQL & Neo4j.
+# CHANGED: SlowAPI rate limiting & CORS middleware configured.
+"""
 import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,12 +12,11 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.db import init_db, sync_init_db
+from app.database import init_db, sync_init_db
 from app.api import cases, ingest, workbench
 from app.api import auth as auth_api
-# NEW: Neo4j graph API router and lifecycle handlers
 from app.api import graph as graph_api
-from app.api import search as search_api
+from app.api import stylometry as stylometry_api
 from app.api import blockchain as blockchain_api
 from app.api import ws as ws_api
 from app.graph.schema import init_neo4j_schema
@@ -23,15 +27,15 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 
 app = FastAPI(
     title="SENTINEL-X",
-    version="0.1.0",
-    description="Dark Web Threat Actor De-Anonymization Platform (SIH26151)"
+    version="1.0.0",
+    description="SaaS Dark Web Threat Actor De-Anonymization Platform for NTRO (SIH26151)"
 )
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
-# CORS middleware allowing frontend origins
+# CORS middleware allowing frontend development and production origins
 FRONTEND_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
@@ -46,12 +50,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount API routers
+# Mount all core API routers
 app.include_router(auth_api.router)
 app.include_router(cases.router)
 app.include_router(ingest.router)
 app.include_router(graph_api.router)
-app.include_router(search_api.router)
+app.include_router(stylometry_api.router)
 app.include_router(blockchain_api.router)
 app.include_router(ws_api.router)
 app.include_router(workbench.router)
@@ -59,7 +63,7 @@ app.include_router(workbench.router)
 
 @app.on_event("startup")
 async def startup():
-    """Startup event: initialize relational database tables and Neo4j schema constraints."""
+    """Startup event: initialize relational database tables and Neo4j graph schema constraints."""
     await init_db()
     sync_init_db()
     await init_neo4j_schema()
@@ -73,9 +77,11 @@ async def shutdown():
 
 @app.get("/api/health")
 def health():
+    """System health check and module operational status."""
     return {
         "status": "ok",
         "service": "SENTINEL-X",
+        "version": "1.0.0",
         "modules": {
             "A_ingestion": "up",
             "B_extraction": "up",

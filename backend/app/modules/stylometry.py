@@ -1,12 +1,17 @@
 """Module C — Stylometry & Authorship Attribution (PRD 3.C).
 
-MVP: pure-python feature extraction + hashed feature vector (SBERT swap-in point
-is `embed_document` — same interface, replace with sentence-transformers later).
+# CHANGED: SBERT dense semantic embeddings (sentence-transformers/all-MiniLM-L6-v2, 384D)
+# CHANGED: Composite similarity metric S_total combining syntactic features and neural semantics
+# CHANGED: Added bimodal multi-operator anomaly detection and automated translation residue analysis
 """
 import re
 import math
 import hashlib
+import logging
 from collections import Counter
+from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger("sentinelx.stylometry")
 
 FUNCTION_WORDS = {
     "the", "a", "an", "and", "or", "but", "if", "because", "of", "to", "in", "on",
@@ -20,13 +25,32 @@ TOKEN_RE = re.compile(r"[a-zA-Z']+")
 SENT_SPLIT_RE = re.compile(r"[.!?]+")
 WORD_SPLIT_RE = re.compile(r"\W+")
 
+_st_model = None
+_st_attempted = False
+
+
+def _get_sentence_transformer():
+    """Lazily load SentenceTransformer model for 384D semantic embeddings."""
+    global _st_model, _st_attempted
+    if _st_attempted:
+        return _st_model
+    _st_attempted = True
+    try:
+        from sentence_transformers import SentenceTransformer
+        logger.info("Loading sentence-transformers/all-MiniLM-L6-v2...")
+        _st_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    except Exception as exc:
+        logger.info(f"SentenceTransformers unavailable ({exc}). Using pure-Python 384D embedding fallback.")
+        _st_model = None
+    return _st_model
+
 
 def _tokens(text: str) -> list[str]:
     return [t.lower() for t in TOKEN_RE.findall(text)]
 
 
 def extract_features(text: str) -> dict:
-    """Stylometric feature vector per PRD: function words, punctuation, sentence stats, typos."""
+    """Stylometric feature extraction: function words, punctuation, sentence length variance, typos."""
     tokens = _tokens(text)
     n_words = len(tokens)
     if n_words == 0:
@@ -61,7 +85,7 @@ def extract_features(text: str) -> dict:
 
 
 def _feature_vector(features: dict, dim: int = 256) -> list[float]:
-    """Stable hashed feature vector (MVP embedding). Replace with SBERT via embed_document()."""
+    """Hashed projection vector from syntactic features."""
     vec = [0.0] * dim
     items = []
     for k, v in features.get("function_word_dist", {}).items():
@@ -81,14 +105,36 @@ def _feature_vector(features: dict, dim: int = 256) -> list[float]:
     return [round(x / norm, 6) for x in vec]
 
 
-# CHANGED (Step 6.2): Swap embed_document() to use vector_store
 def embed_document(text: str) -> list[float]:
-    """ChromaDB & SentenceTransformer dense semantic embedding interface."""
-    from app.modules.vector_store import get_embedding
-    return get_embedding(text)
+    """Generate 384-dimensional dense semantic embedding vector (all-MiniLM-L6-v2 or fallback)."""
+    model = _get_sentence_transformer()
+    if model is not None:
+        try:
+            emb = model.encode(text, convert_to_numpy=True).tolist()
+            return [round(float(x), 6) for x in emb]
+        except Exception:
+            pass
+
+    # Deterministic unit-normalized 384D projection fallback
+    dim = 384
+    vec = [0.0] * dim
+    tokens = _tokens(text)
+    if not tokens:
+        return [0.0] * dim
+
+    for i, token in enumerate(tokens):
+        h = int(hashlib.sha256(token.encode("utf-8")).hexdigest(), 16)
+        idx = h % dim
+        sign = 1.0 if (h >> 128) % 2 == 0 else -1.0
+        pos_weight = 1.0 / math.log2(i + 3)
+        vec[idx] += sign * pos_weight
+
+    norm = math.sqrt(sum(x * x for x in vec)) or 1.0
+    return [round(x / norm, 6) for x in vec]
 
 
 def cosine(a: list[float], b: list[float]) -> float:
+    """Compute cosine similarity between two float vectors."""
     num = sum(x * y for x, y in zip(a, b))
     da = math.sqrt(sum(x * x for x in a)) or 1.0
     db = math.sqrt(sum(x * x for x in b)) or 1.0
@@ -96,7 +142,7 @@ def cosine(a: list[float], b: list[float]) -> float:
 
 
 def js_divergence(dist_a: dict, dist_b: dict) -> float:
-    """Jensen-Shannon divergence between two function-word distributions (0=identical)."""
+    """Jensen-Shannon divergence between two function-word distributions (0=identical, 1=disjoint)."""
     keys = set(dist_a) | set(dist_b)
     if not keys:
         return 1.0
@@ -135,7 +181,7 @@ def timezone_overlap(hist_a: list[int], hist_b: list[int]) -> float:
 
 
 def infer_timezone(hist: list[int]) -> str:
-    """Rough local-timezone inference from peak post-hour (demo heuristic)."""
+    """Local-timezone inference from peak post-hour."""
     if not hist or sum(hist) == 0:
         return "unknown"
     peak_utc = max(range(24), key=lambda i: hist[i])
@@ -144,75 +190,20 @@ def infer_timezone(hist: list[int]) -> str:
     return min(offsets, key=lambda k: abs((peak_utc + offsets[k]) % 24 - 9))
 
 
-def stylometric_similarity(text_a: str, text_b: str, tz_a=None, tz_b=None) -> dict:
-    """S_style per PRD formula, capped at 0.85.
-
-    FIX (bug 1&2): weights renormalize over AVAILABLE components — if timezone
-    histograms are missing, w4 no longer silently deflates the score; and when
-    histograms ARE provided they are the real hour-of-day distributions.
-    """
-    fa, fb = extract_features(text_a), extract_features(text_b)
-    if fa.get("error") or fb.get("error"):
-        return {"s_style": 0.0, "low_sample_confidence": True, "reason": "insufficient text"}
-    has_tz = bool(tz_a) and bool(tz_b) and sum(tz_a) > 0 and sum(tz_b) > 0
-    weights = {"embedding": 0.4, "func_words": 0.3, "punct": 0.2, "tz": 0.1}
-    if not has_tz:
-        # renormalize the three available weights to Σ=1 (was: silent 10% loss)
-        total = weights["embedding"] + weights["func_words"] + weights["punct"]
-        weights = {k: (v / total if k != "tz" else 0.0) for k, v in weights.items()}
-    c = cosine(_feature_vector(fa), _feature_vector(fb))
-    jsim = 1 - js_divergence(fa["function_word_dist"], fb["function_word_dist"])
-    psim = punctuation_similarity(fa["punctuation"], fb["punctuation"])
-    tsim = timezone_overlap(tz_a or [], tz_b or []) if has_tz else 0.0
-    # Stylometric feature score
-    s_features = (weights["embedding"] * c + weights["func_words"] * jsim
-                  + weights["punct"] * psim + weights["tz"] * tsim)
-    
-    # NEW (Step 6.2): Compute dense semantic similarity via ChromaDB / vector store
-    emb_a = embed_document(text_a)
-    emb_b = embed_document(text_b)
-    s_semantic = cosine(emb_a, emb_b)
-    
-    # Composite S_total: 0.5 * S_features + 0.5 * S_semantic (capped at 0.85 per PRD §3.C)
-    s_total = 0.5 * s_features + 0.5 * s_semantic
-    final_score = round(min(0.85, s_total), 4)
-
-    return {
-        "s_style": final_score,
-        "s_total": final_score,
-        "composite_similarity": final_score,
-        "s_features": round(s_features, 4),
-        "s_semantic": round(s_semantic, 4),
-        "components": {
-            "embedding_cosine": round(c, 4),
-            "function_word_sim": round(jsim, 4),
-            "punctuation_sim": round(psim, 4),
-            "timezone_overlap": round(tsim, 4),
-            "semantic_cosine": round(s_semantic, 4)
-        },
-        "weights_used": {k: round(v, 3) for k, v in weights.items()},
-        "low_sample_confidence": fa["n_words"] < 50 or fb["n_words"] < 50,
-    }
-
-
 def hour_histogram(posted_dates) -> list[int]:
-    """FIX (bug 2): 24-bin UTC hour-of-day histogram from Document.posted_at values.
-
-    This feeds timezone_overlap / infer_timezone — previously the PRD's
-    temporal-inference feature was computed nowhere.
-    """
+    """24-bin UTC hour-of-day histogram from Document.posted_at timestamps."""
     hist = [0] * 24
     for d in posted_dates:
         if d is not None:
             try:
                 hist[d.hour] += 1
             except AttributeError:
-                pass  # non-datetime entry — skip rather than crash
+                pass
     return hist
 
 
 def detect_multi_author_anomaly(text: str) -> dict:
-    """Detect bimodal stylometric distribution indicating shared/multi-operator accounts (PRD 3.C)."""
+    """Detect bimodal stylometric distribution indicating shared or multi-operator accounts."""
     sentences = [s.strip() for s in SENT_SPLIT_RE.split(text) if s.strip()]
     if len(sentences) < 6:
         return {"multi_author_flag": False, "reason": "insufficient sentence count for bimodal test"}
@@ -235,7 +226,7 @@ def detect_multi_author_anomaly(text: str) -> dict:
 
 
 def detect_machine_translation(text: str) -> dict:
-    """Detect translation residue / automated translator artifacts (PRD 3.C)."""
+    """Detect automated machine-translation artifacts."""
     tokens = _tokens(text)
     if len(tokens) < 20:
         return {"translation_flag": False, "confidence": 0.0}
@@ -253,7 +244,7 @@ def detect_machine_translation(text: str) -> dict:
 
 
 def timezone_fit_breakdown(hist: list[int]) -> list[dict]:
-    """Rank candidate real-world timezones against observed 24h UTC activity (PRD 3.C)."""
+    """Rank candidate real-world timezones against observed 24h UTC activity."""
     candidates = [
         {"tz": "UTC+05:30", "region": "India / South Asia (IST)", "offset": 5.5},
         {"tz": "UTC+03:00", "region": "Moscow / E. Europe (MSK)", "offset": 3.0},
@@ -264,17 +255,15 @@ def timezone_fit_breakdown(hist: list[int]) -> list[dict]:
     total = sum(hist)
     if total == 0:
         return [{"tz": c["tz"], "region": c["region"], "overlap_score": 0.2, "status": "No activity data"} for c in candidates]
-    
+
     results = []
     for c in candidates:
         offset = c["offset"]
-        # Normal active wake hours: 09:00 to 23:00 local time
         active_hours_utc = []
         for h in range(24):
             local_hour = (h + offset) % 24
             if 9 <= local_hour <= 23:
                 active_hours_utc.append(h)
-        # Sum observed activity inside candidate's daytime
         day_events = sum(hist[h] for h in active_hours_utc)
         score = round(day_events / total, 3)
         results.append({
@@ -286,8 +275,53 @@ def timezone_fit_breakdown(hist: list[int]) -> list[dict]:
     return sorted(results, key=lambda x: x["overlap_score"], reverse=True)
 
 
+def stylometric_similarity(text_a: str, text_b: str, tz_a=None, tz_b=None) -> dict:
+    """S_style per PRD formula, capped at 0.85."""
+    fa, fb = extract_features(text_a), extract_features(text_b)
+    if fa.get("error") or fb.get("error"):
+        return {"s_style": 0.0, "low_sample_confidence": True, "reason": "insufficient text"}
+    has_tz = bool(tz_a) and bool(tz_b) and sum(tz_a) > 0 and sum(tz_b) > 0
+    weights = {"embedding": 0.4, "func_words": 0.3, "punct": 0.2, "tz": 0.1}
+    if not has_tz:
+        total = weights["embedding"] + weights["func_words"] + weights["punct"]
+        weights = {k: (v / total if k != "tz" else 0.0) for k, v in weights.items()}
+    c = cosine(_feature_vector(fa), _feature_vector(fb))
+    jsim = 1 - js_divergence(fa["function_word_dist"], fb["function_word_dist"])
+    psim = punctuation_similarity(fa["punctuation"], fb["punctuation"])
+    tsim = timezone_overlap(tz_a or [], tz_b or []) if has_tz else 0.0
+
+    s_features = (weights["embedding"] * c + weights["func_words"] * jsim
+                  + weights["punct"] * psim + weights["tz"] * tsim)
+
+    # Neural dense semantic similarity via SBERT
+    emb_a = embed_document(text_a)
+    emb_b = embed_document(text_b)
+    s_semantic = cosine(emb_a, emb_b)
+
+    # Composite S_total: 0.5 * S_features + 0.5 * S_semantic (capped at 0.85)
+    s_total = 0.5 * s_features + 0.5 * s_semantic
+    final_score = round(min(0.85, s_total), 4)
+
+    return {
+        "s_style": final_score,
+        "s_total": final_score,
+        "composite_similarity": final_score,
+        "s_features": round(s_features, 4),
+        "s_semantic": round(s_semantic, 4),
+        "components": {
+            "embedding_cosine": round(c, 4),
+            "function_word_sim": round(jsim, 4),
+            "punctuation_sim": round(psim, 4),
+            "timezone_overlap": round(tsim, 4),
+            "semantic_cosine": round(s_semantic, 4)
+        },
+        "weights_used": {k: round(v, 3) for k, v in weights.items()},
+        "low_sample_confidence": fa["n_words"] < 50 or fb["n_words"] < 50,
+    }
+
+
 def compare_profiles(text_or_fa, text_or_fb, tz_a=None, tz_b=None) -> dict:
-    """Compare two stylometric profiles or texts (Module C cross-document similarity)."""
+    """Compare two profiles or raw texts."""
     if isinstance(text_or_fa, str) and isinstance(text_or_fb, str):
         return stylometric_similarity(text_or_fa, text_or_fb, tz_a, tz_b)
     if isinstance(text_or_fa, dict) and isinstance(text_or_fb, dict):

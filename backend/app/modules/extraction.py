@@ -22,8 +22,9 @@ def normalize_text(text: str) -> str:
 # ---------- Cryptocurrency address patterns ----------
 BTC_RE = re.compile(r"\b(1[a-km-zA-HJ-NP-Z1-9]{25,34}|3[a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})\b")
 ETH_RE = re.compile(r"\b(0x[a-fA-F0-9]{40})\b")
-XMR_RE = re.compile(r"\b4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}\b")
-TRX_RE = re.compile(r"\bT[1-9A-HJ-NP-Za-km-z]{33}\b")
+# CHANGED: Added capturing parentheses to XMR_RE and TRX_RE for consistent group(1) extraction
+XMR_RE = re.compile(r"\b(4[0-9AB][1-9A-HJ-NP-Za-km-z]{93})\b")
+TRX_RE = re.compile(r"\b(T[1-9A-HJ-NP-Za-km-z]{33})\b")
 
 _BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 

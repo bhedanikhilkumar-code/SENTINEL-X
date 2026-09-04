@@ -1,11 +1,9 @@
 """SQLAlchemy models — SENTINEL-X core schema (PRD Sections 3 & 5).
 
-CHANGED: migrated all column types to PostgreSQL-compatible equivalents.
-NEW:     User.role now uses SQLAlchemy Enum (4-value).
-NEW:     User.hashed_password, User.is_active, User.created_at fields.
-NEW:     TorCircuit model (Tor hop metadata).
-NEW:     WalletCluster model (common-input-ownership clusters).
-KEPT:    All original models and fields exactly as they were.
+# CHANGED: Migrated all models to PostgreSQL-first architecture with JSONB / JSONType.
+# CHANGED: Added UserRole 4-role Enum (analyst, senior_analyst, soc_lead, auditor).
+# CHANGED: Added User.hashed_password, is_active, created_at.
+# CHANGED: Added TorCircuit, WalletCluster, WalletTag models.
 """
 import uuid
 from datetime import datetime, timezone
@@ -21,17 +19,14 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy import JSON
-from sqlalchemy.dialects.postgresql import JSONB  # CHANGED: JSON → JSONB for PostgreSQL
+from sqlalchemy.dialects.postgresql import JSONB
 
 # Portable JSON column: JSONB on PostgreSQL, plain JSON on SQLite (dev fallback)
 JSONType = JSONB().with_variant(JSON(), "sqlite")
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-# CHANGED: Import Base from app.database
 from app.database import Base
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def uid() -> str:
     return str(uuid.uuid4())
@@ -41,9 +36,6 @@ def now_iso() -> datetime:
     return datetime.now(timezone.utc)
 
 
-# ── Enums ─────────────────────────────────────────────────────────────────────
-
-# NEW: explicit 4-role enum — analyst < senior_analyst < soc_lead, plus auditor
 UserRole = Enum(
     "analyst",
     "senior_analyst",
@@ -53,30 +45,20 @@ UserRole = Enum(
 )
 
 
-# ── Models ────────────────────────────────────────────────────────────────────
-
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     username: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     display_name: Mapped[str] = mapped_column(String(255), default="")
-
-    # CHANGED: plain String → Enum column with 4-value role hierarchy
     role: Mapped[str] = mapped_column(
         UserRole,
         nullable=False,
         default="analyst",
         server_default="analyst",
     )
-
-    # NEW: password storage (bcrypt hash), replaces PBKDF2 shim in security/auth.py
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False, default="")
-
-    # NEW: soft-delete / account lock flag
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
-
-    # NEW: creation timestamp for auditing and token revocation windows
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=now_iso
     )
@@ -93,7 +75,6 @@ class Case(Base):
     created_by: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_iso)
     seed_document_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    # [{at, c_total}]
     confidence_trend: Mapped[list] = mapped_column(JSONType, default=list)
 
     documents = relationship("RawDocument", backref="case")
@@ -106,7 +87,7 @@ class RawDocument(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     case_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("cases.id"), nullable=True)
     source_url: Mapped[str] = mapped_column(Text, default="")
-    # forum_post | leak_dump | telegram_message | paste
+    # forum_post | leak_dump | telegram_message | paste | onion_forum
     source_type: Mapped[str] = mapped_column(String(64), default="forum_post")
     author_handle: Mapped[str] = mapped_column(String(255), default="anonymous")
     # darkweb | clearnet
@@ -120,7 +101,7 @@ class RawDocument(Base):
 
 
 class Artifact(Base):
-    """Module B output — extracted cryptographic / digital artifacts (PRD JSON schema)."""
+    """Module B output — extracted cryptographic / digital artifacts."""
     __tablename__ = "artifacts"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -140,7 +121,6 @@ class StyloProfile(Base):
     __tablename__ = "stylo_profiles"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    # handle or corpus name
     label: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     platform: Mapped[str] = mapped_column(String(32), default="darkweb")
     features: Mapped[dict] = mapped_column(JSONType, default=dict)
@@ -150,6 +130,7 @@ class StyloProfile(Base):
 
 
 class Hypothesis(Base):
+    """Module D output: attribution hypothesis and Bayesian confidence."""
     __tablename__ = "hypotheses"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -166,7 +147,7 @@ class Hypothesis(Base):
 
 
 class GraphAnnotation(Base):
-    """Module E analyst tool: node/edge annotations (PRD 3.E)."""
+    """Module E analyst tool: node/edge annotations."""
     __tablename__ = "graph_annotations"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -191,48 +172,35 @@ class AuditEntry(Base):
     entry_hash: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
 
 
-# ── NEW: TorCircuit ───────────────────────────────────────────────────────────
-
 class TorCircuit(Base):
     """Tracks each Tor circuit used during dark-web collection (PRD §3.A)."""
     __tablename__ = "tor_circuits"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    # IP or fingerprint of guard/entry relay
     entry_node: Mapped[str] = mapped_column(String(255), default="")
-    # IP or fingerprint of exit relay
     exit_node: Mapped[str] = mapped_column(String(255), default="")
-    # Tor-assigned circuit identifier
     circuit_id: Mapped[str] = mapped_column(String(64), default="")
-    # Round-trip latency measured at circuit build time (ms)
     latency_ms: Mapped[float] = mapped_column(Float, default=0.0)
     # active | expired | failed
     status: Mapped[str] = mapped_column(String(32), default="active")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_iso)
 
 
-# ── NEW: WalletCluster ────────────────────────────────────────────────────────
-
 class WalletCluster(Base):
     """Common-input-ownership wallet cluster derived from Module B blockchain analysis."""
     __tablename__ = "wallet_clusters"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    # List of addresses belonging to this cluster
     addresses: Mapped[list] = mapped_column(JSONType, default=list, nullable=False)
     # btc_co_spend | eth_contract | xmr_stealth | exchange_deposit
     cluster_type: Mapped[str] = mapped_column(String(64), default="btc_co_spend")
-    # True if cluster contains a known exchange deposit address
     exchange_flag: Mapped[bool] = mapped_column(Boolean, default=False)
-    # Bayesian confidence that all addresses share one controlling identity (0.0–1.0)
     confidence: Mapped[float] = mapped_column(Float, default=0.0)
     case_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("cases.id"), nullable=True, index=True
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_iso)
 
-
-# ── NEW: WalletTag ────────────────────────────────────────────────────────────
 
 class WalletTag(Base):
     """Analyst annotations and forensic tags on cryptocurrency addresses (PRD §3.D)."""

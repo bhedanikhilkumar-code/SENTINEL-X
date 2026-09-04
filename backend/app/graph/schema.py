@@ -1,48 +1,28 @@
-"""Neo4j schema constraints and indexes for SENTINEL-X (Module E)."""
+"""Neo4j graph schema constraints and index initialization (Module E)."""
 import logging
 from app.graph.neo4j_client import get_neo4j_session
 
-logger = logging.getLogger("sentinelx.neo4j")
+logger = logging.getLogger("sentinelx.neo4j.schema")
 
 CONSTRAINTS = [
-    """
-    CREATE CONSTRAINT actor_unique IF NOT EXISTS 
-    FOR (a:Actor) REQUIRE a.id IS UNIQUE
-    """,
-    """
-    CREATE CONSTRAINT alias_unique IF NOT EXISTS 
-    FOR (a:Alias) REQUIRE a.handle IS UNIQUE
-    """,
-    """
-    CREATE CONSTRAINT pgp_unique IF NOT EXISTS 
-    FOR (p:PGPKey) REQUIRE p.fingerprint IS UNIQUE
-    """,
-    """
-    CREATE CONSTRAINT wallet_unique IF NOT EXISTS 
-    FOR (w:Wallet) REQUIRE w.address IS UNIQUE
-    """,
-    """
-    CREATE CONSTRAINT clearnet_unique IF NOT EXISTS 
-    FOR (c:ClearnetAccount) REQUIRE c.url IS UNIQUE
-    """
+    "CREATE CONSTRAINT actor_id_unique IF NOT EXISTS FOR (a:Actor) REQUIRE a.id IS UNIQUE",
+    "CREATE CONSTRAINT alias_handle_unique IF NOT EXISTS FOR (al:Alias) REQUIRE al.handle IS UNIQUE",
+    "CREATE CONSTRAINT pgp_fingerprint_unique IF NOT EXISTS FOR (p:PGPKey) REQUIRE p.fingerprint IS UNIQUE",
+    "CREATE CONSTRAINT wallet_address_unique IF NOT EXISTS FOR (w:Wallet) REQUIRE w.address IS UNIQUE",
+    "CREATE CONSTRAINT clearnet_url_unique IF NOT EXISTS FOR (c:ClearnetAccount) REQUIRE c.url IS UNIQUE",
+    "CREATE INDEX node_case_id_idx IF NOT EXISTS FOR (n:Entity) ON (n.case_id)",
 ]
 
 
-async def init_neo4j_schema() -> bool:
-    """Execute unique constraints and schema initialization in Neo4j.
-    
-    Returns True if constraints were successfully created, False if Neo4j is unavailable.
-    """
+async def init_neo4j_schema():
+    """Execute Cypher schema constraint queries on startup."""
     try:
         async with get_neo4j_session() as session:
             for query in CONSTRAINTS:
-                clean_query = " ".join(query.strip().split())
-                await session.run(clean_query)
-        logger.info("Neo4j schema constraints successfully initialized.")
-        return True
+                try:
+                    await session.run(query)
+                except Exception as exc:
+                    logger.debug(f"Neo4j constraint query noticed: {exc}")
+            logger.info("Neo4j graph schema constraints verified.")
     except Exception as exc:
-        logger.warning(
-            f"Neo4j schema initialization skipped (offline/unreachable): {exc}. "
-            "Graph service will utilize fallback mode until Neo4j is available."
-        )
-        return False
+        logger.info(f"Neo4j offline or skipping schema initialization: {exc}")

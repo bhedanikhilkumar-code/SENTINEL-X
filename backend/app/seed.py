@@ -86,11 +86,18 @@ def seed(force: bool = False):
         print("Resetting demo database...")
         sync_init_db(reset=True)
 
-    soc = User(id="soc_lead_demo", username="anjali", role="soc_lead", display_name="Anjali (SOC Lead)")
-    analyst = User(id="analyst_demo", username="priya", role="analyst", display_name="Priya (Senior Analyst)")
-    db.merge(soc); db.merge(analyst)
+    # CHANGED: Reuse existing user records if already provisioned by production seed
+    soc = db.query(User).filter_by(username="anjali").first()
+    if not soc:
+        soc = User(id="soc_lead_demo", username="anjali", role="soc_lead", display_name="Anjali (SOC Lead)")
+        db.add(soc)
+    analyst = db.query(User).filter_by(username="priya").first()
+    if not analyst:
+        analyst = User(id="analyst_demo", username="priya", role="analyst", display_name="Priya (Senior Analyst)")
+        db.add(analyst)
+    db.flush()
 
-    case = Case(title="Tracking DarkViper", created_by="analyst_demo",
+    case = Case(title="Tracking DarkViper", created_by=analyst.id,
                 description="Fictional demo case: ransomware broker DarkViper leak-site activity, PGP key reuse, and exchange cash-out tracing.")
     db.add(case); db.flush()
 

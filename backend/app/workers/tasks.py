@@ -6,7 +6,7 @@ import os
 from typing import List, Optional
 
 from app.workers.celery_app import celery_app
-from app.db import SyncSessionLocal
+from app.database import SyncSessionLocal
 from app.models import RawDocument, Artifact, Case, StyloProfile, AuditEntry
 from app.modules.extraction import extract_artifacts
 from app.modules.stylometry import extract_features, compare_profiles as stylo_compare
@@ -22,16 +22,14 @@ def ingest_document_task(self, raw_doc_id: str):
     """Module A/B: Process raw document, extract artifacts, trigger downstream pipelines."""
     db = SyncSessionLocal()
     try:
-        # 1. Fetch RawDocument from PostgreSQL by id
         doc = db.get(RawDocument, raw_doc_id)
         if not doc:
             logger.warning(f"RawDocument {raw_doc_id} not found.")
             return {"status": "error", "message": "Document not found"}
 
-        # 2. Run extraction.extract_artifacts(content) — Module B
+        # Extract cryptographic and digital artifacts (Module B)
         artifacts_data = extract_artifacts(doc.raw_text, doc.id)
 
-        # 3. Save all Artifact records to PostgreSQL
         created_artifacts = []
         for art in artifacts_data:
             existing = db.query(Artifact).filter_by(
@@ -45,212 +43,230 @@ def ingest_document_task(self, raw_doc_id: str):
                 created_artifacts.append(art)
         db.commit()
 
-        # 4. Trigger stylometry_task and correlation_task if linked to a case
+        # Trigger stylometry_task and correlation_task if linked to a case
         if doc.case_id:
             try:
                 stylometry_task.delay(doc.case_id, [doc.id])
                 correlation_task.delay(doc.case_id)
             except Exception as task_err:
-                # Fallback in local/eager mode if worker broker isn't active
                 logger.warning(f"Could not dispatch async subtasks: {task_err}")
 
-        # 5. Append audit log entry: [INGEST] document processed
-        append_audit(
-            db,
-            actor="celery_worker",
-            action="ingest.processed",
-            entity_ids=[doc.id],
-            detail=f"[INGEST] document processed: sha256={doc.sha256[:16]}… artifacts_extracted={len(artifacts_data)}"
-        )
+        # Broadcast WebSocket events if enabled
+        if doc.case_id:
+            try:
+                from app.api.ws import broadcast_case_event
+                broadcast_case_event(
+                    doc.case_id,
+                    event="task_progress",
+                    data={"task": "ingest", "status": "completed", "doc_id": doc.id, "artifacts": len(created_artifacts)}
+                )
+                for a in created_artifacts:
+                    broadcast_case_event(
+                        doc.case_id,
+                        event="node_added",
+                        data={"id": a["id"], "type": a["artifact_type"], "label": a["value"][:24], "case_id": doc.case_id}
+                    )
+            except Exception:
+                pass
 
         return {
             "status": "success",
             "doc_id": doc.id,
-            "artifacts_count": len(artifacts_data)
+            "artifacts_found": len(created_artifacts),
+            "sha256": doc.sha256
         }
     except Exception as exc:
+        logger.error(f"Error in ingest_document_task for {raw_doc_id}: {exc}")
         db.rollback()
-        logger.error(f"Error in ingest_document_task: {exc}")
         raise self.retry(exc=exc)
     finally:
         db.close()
 
 
-@celery_app.task(bind=True, max_retries=2)
-def stylometry_task(self, case_id: str, doc_ids: List[str]):
-    """Module C: Extract stylometric features, compare profiles, and update Neo4j."""
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
+def stylometry_task(self, case_id: str, doc_ids: Optional[List[str]] = None):
+    """Module C: Compute stylometric features and dense semantic embeddings for documents."""
     db = SyncSessionLocal()
     try:
-        # 1. Fetch all documents for case
-        docs = db.query(RawDocument).filter_by(case_id=case_id).all()
-        if not docs:
-            return {"status": "skipped", "message": "No documents for case"}
+        case = db.get(Case, case_id)
+        if not case:
+            return {"status": "error", "message": "Case not found"}
 
-        # 2. Run stylometry.extract_features() on each
-        profiles = []
-        for d in docs:
-            feats = extract_features(d.raw_text)
-            existing_prof = db.query(StyloProfile).filter_by(label=d.author_handle).first()
-            if not existing_prof:
-                prof = StyloProfile(
-                    label=d.author_handle,
-                    platform=d.platform,
+        query = db.query(RawDocument).filter(RawDocument.case_id == case_id)
+        if doc_ids:
+            query = query.filter(RawDocument.id.in_(doc_ids))
+        docs = query.all()
+
+        profiles_updated = 0
+        for doc in docs:
+            feats = extract_features(doc.raw_text)
+            profile = db.query(StyloProfile).filter_by(label=doc.author_handle).first()
+            if not profile:
+                profile = StyloProfile(
+                    label=doc.author_handle,
+                    platform=doc.platform,
                     features=feats,
                     sample_count=1
                 )
-                db.add(prof)
+                db.add(profile)
             else:
-                existing_prof.features = feats
-                existing_prof.sample_count += 1
-            profiles.append(d.author_handle)
+                profile.sample_count += 1
+                profile.features = feats
+            profiles_updated += 1
+
         db.commit()
 
-        # 3. Add stylometric_match edges to Neo4j graph if Neo4j is online
+        # Update ChromaDB vector index
         try:
-            from app.graph.neo4j_client import get_neo4j_session, is_neo4j_available
-            from app.modules.graph_service import add_edge
+            from app.vector.chroma_client import get_stylometry_collection
+            coll = get_stylometry_collection()
+            for doc in docs:
+                coll.upsert(
+                    ids=[doc.id],
+                    documents=[doc.raw_text],
+                    metadatas=[{
+                        "author_handle": doc.author_handle,
+                        "case_id": case_id,
+                        "platform": doc.platform
+                    }]
+                )
+        except Exception as v_err:
+            logger.warning(f"ChromaDB upsert skipped in worker: {v_err}")
 
-            if is_neo4j_available():
-                async def link_stylo():
-                    async with get_neo4j_session() as session:
-                        if len(profiles) >= 2:
-                            await add_edge(
-                                session,
-                                from_id=f"handle:{profiles[0]}",
-                                to_id=f"handle:{profiles[1]}",
-                                rel_type="stylometric_match",
-                                confidence=0.68
-                            )
-                asyncio.run(link_stylo())
-        except Exception as neo_err:
-            logger.info(f"Neo4j edge addition skipped in task: {neo_err}")
+        # Broadcast progress
+        try:
+            from app.api.ws import broadcast_case_event
+            broadcast_case_event(
+                case_id,
+                event="task_progress",
+                data={"task": "stylometry", "status": "completed", "profiles_updated": profiles_updated}
+            )
+        except Exception:
+            pass
 
-        # 4. Append audit log: [STYLO] profile computed
-        append_audit(
-            db,
-            actor="celery_worker",
-            action="stylometry.computed",
-            entity_ids=[case_id],
-            detail=f"[STYLO] profile computed for case {case_id} across {len(docs)} documents"
-        )
-        return {"status": "success", "case_id": case_id, "profiles": profiles}
+        return {"status": "success", "profiles_updated": profiles_updated}
     except Exception as exc:
         db.rollback()
-        logger.error(f"Error in stylometry_task: {exc}")
         raise self.retry(exc=exc)
     finally:
         db.close()
 
 
-@celery_app.task(bind=True, max_retries=2)
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
 def correlation_task(self, case_id: str):
-    """Module D: Aggregate multi-signal evidence, compute C_total, update case and Neo4j."""
+    """Module D: Recompute multi-signal Bayesian attribution confidence C_total."""
     db = SyncSessionLocal()
     try:
-        # 1. Fetch all Artifacts for case from PostgreSQL
         case = db.get(Case, case_id)
         if not case:
             return {"status": "error", "message": "Case not found"}
 
-        docs = db.query(RawDocument).filter_by(case_id=case_id).all()
-        doc_ids = [d.id for d in docs]
-        artifacts = db.query(Artifact).filter(Artifact.source_doc_id.in_(doc_ids)).all() if doc_ids else []
+        artifacts = (
+            db.query(Artifact)
+            .join(RawDocument, Artifact.source_doc_id == RawDocument.id)
+            .filter(RawDocument.case_id == case_id)
+            .all()
+        )
 
-        # 2. Run correlation.compute_c_total() — Module D formula
         signals = []
-        for a in artifacts:
-            if a.artifact_type == "pgp_key":
-                signals.append({"signal_type": "pgp_fingerprint_exact", "ci": a.extraction_confidence, "source_doc_ids": [a.source_doc_id]})
-            elif a.artifact_type in ("btc_address", "eth_address"):
-                signals.append({"signal_type": "wallet_exact_match", "ci": a.extraction_confidence, "source_doc_ids": [a.source_doc_id]})
-            elif a.artifact_type == "email":
-                signals.append({"signal_type": "email_in_breach", "ci": 0.65, "source_doc_ids": [a.source_doc_id]})
+        for art in artifacts:
+            sig_type = "handle_match"
+            ci = art.extraction_confidence or 0.8
+            if art.artifact_type == "pgp_key":
+                sig_type = "pgp_fingerprint_exact"
+                ci = 0.95
+            elif art.artifact_type in ("btc_address", "eth_address", "xmr_address"):
+                sig_type = "wallet_clustering"
+                ci = 0.85
+            elif art.artifact_type == "ssh_key":
+                sig_type = "ssh_key_exact"
+                ci = 0.90
+            elif art.artifact_type == "email":
+                sig_type = "email_in_breach"
+                ci = 0.65
 
-        corr_result = compute_c_total(signals) if signals else {"c_total": 0.0, "breakdown": []}
+            signals.append({
+                "signal_type": sig_type,
+                "ci": ci,
+                "detail": {"type": art.artifact_type, "val": art.value[:20]}
+            })
 
-        # 3. For candidate identities found: add ClearnetAccount node to Neo4j if online
-        try:
-            from app.graph.neo4j_client import get_neo4j_session, is_neo4j_available
-            from app.modules.graph_service import add_clearnet_node
+        res = compute_c_total(signals)
+        c_total = res["c_total"]
 
-            if is_neo4j_available():
-                async def update_neo4j():
-                    async with get_neo4j_session() as session:
-                        await add_clearnet_node(
-                            session,
-                            url="https://github.com/vk_devtools",
-                            platform="github",
-                            confidence=corr_result["c_total"],
-                            actor_id=case_id
-                        )
-                asyncio.run(update_neo4j())
-        except Exception as neo_err:
-            logger.info(f"Neo4j correlation node update skipped: {neo_err}")
-
-        # 4. Update Case.confidence_trend in PostgreSQL
-        from datetime import datetime, timezone
         trend = list(case.confidence_trend or [])
-        trend.append({"at": datetime.now(timezone.utc).isoformat(), "c_total": corr_result["c_total"]})
+        trend.append({"at": str(res.get("computed_at", "")), "c_total": c_total})
         case.confidence_trend = trend
         db.commit()
 
-        # 5. Append audit log: [CORRELATE] signals merged
-        append_audit(
-            db,
-            actor="celery_worker",
-            action="correlation.computed",
-            entity_ids=[case_id],
-            detail=f"[CORRELATE] signals merged: C_total={corr_result['c_total']} ({len(signals)} signals evaluated)"
-        )
+        # Check for alert threshold C_i > 0.85 or C_total > 0.90
+        try:
+            from app.api.ws import broadcast_case_event, broadcast_global_event
+            broadcast_case_event(
+                case_id,
+                event="confidence_updated",
+                data={"case_id": case_id, "c_total": c_total, "breakdown": res["breakdown"]}
+            )
+            if c_total >= 0.85:
+                broadcast_case_event(
+                    case_id,
+                    event="alert",
+                    data={
+                        "level": "CRITICAL" if c_total >= 0.90 else "HIGH",
+                        "message": f"De-anonymization confidence reached {round(c_total * 100, 1)}%",
+                        "c_total": c_total
+                    }
+                )
+            if c_total >= 0.90:
+                broadcast_global_event(
+                    event="critical_attribution",
+                    data={"case_id": case_id, "title": case.title, "c_total": c_total}
+                )
+        except Exception:
+            pass
 
-        return {"status": "success", "case_id": case_id, "c_total": corr_result["c_total"]}
+        return {"status": "success", "c_total": c_total, "signals_count": len(signals)}
     except Exception as exc:
         db.rollback()
-        logger.error(f"Error in correlation_task: {exc}")
         raise self.retry(exc=exc)
     finally:
         db.close()
 
 
-@celery_app.task
-def export_dossier_task(case_id: str, analyst_id: str):
-    """Module F: Generate signed ReportLab PDF dossier asynchronously and store result."""
+@celery_app.task(bind=True, max_retries=2, default_retry_delay=30)
+def export_dossier_task(self, case_id: str, actor_id: str = "analyst_demo"):
+    """Module F: Generate 6-page court-admissible PDF dossier in background."""
     db = SyncSessionLocal()
     try:
-        # 1. Fetch full case from PostgreSQL
         case = db.get(Case, case_id)
         if not case:
             return {"status": "error", "message": "Case not found"}
 
-        # 2. Generate PDF using ReportLab
-        pdf_bytes = generate_dossier_pdf(case, db)
-        pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
-
-        # 3. Save PDF to disk if exports directory exists
+        pdf_bytes = generate_dossier_pdf(case, db=db)
+        
+        # Save dossier to export directory
         export_dir = os.path.join(os.getcwd(), "exports")
         os.makedirs(export_dir, exist_ok=True)
-        export_path = os.path.join(export_dir, f"dossier_{case_id}.pdf")
-        with open(export_path, "wb") as f:
+        pdf_path = os.path.join(export_dir, f"DOSSIER_{case_id[:8]}.pdf")
+        with open(pdf_path, "wb") as f:
             f.write(pdf_bytes)
 
-        # 4. Append audit log: [EXPORT] dossier generated
         append_audit(
             db,
-            actor=analyst_id or "system",
+            actor=actor_id,
             action="dossier.exported",
-            entity_ids=[case.id],
-            detail=f"[EXPORT] dossier generated ({len(pdf_bytes)} bytes) stored at {export_path}"
+            entity_ids=[case_id],
+            detail=f"Asynchronously generated 6-page court-admissible PDF ({len(pdf_bytes)} bytes) at {pdf_path}"
         )
 
         return {
-            "status": "completed",
+            "status": "success",
             "case_id": case_id,
-            "file_size": len(pdf_bytes),
-            "export_path": export_path,
-            "pdf_b64": pdf_b64[:100] + "..."  # Truncated summary preview
+            "bytes_generated": len(pdf_bytes),
+            "file_path": pdf_path
         }
     except Exception as exc:
-        logger.error(f"Error in export_dossier_task: {exc}")
-        return {"status": "error", "error": str(exc)}
+        db.rollback()
+        raise self.retry(exc=exc)
     finally:
         db.close()

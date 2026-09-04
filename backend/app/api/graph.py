@@ -27,17 +27,23 @@ class EdgeCreate(BaseModel):
     confidence: float = 1.0
 
 
+class AnnotateBody(BaseModel):
+    node_id: str
+    note: str
+    author: str = "analyst_demo"
+
+
 @router.get("/{case_id}/cytoscape")
 async def get_case_cytoscape(case_id: str, db: Session = Depends(get_db)):
-    """Fetch all graph nodes and edges for a specific case in Cytoscape.js format."""
+    """Fetch all graph nodes and edges for a specific case formatted for Cytoscape.js."""
     try:
         async with get_neo4j_session() as session:
             data = await gs.get_cytoscape_json(session, case_id=case_id)
-            if data["nodes"]:
+            if data and data.get("nodes"):
                 return data
     except Exception:
         pass
-    # Fallback to local graph_service if Neo4j is offline or empty
+    # Fallback to in-memory graph service
     graph_service.rebuild_from_db(db)
     return graph_service.to_cytoscape()
 
@@ -59,38 +65,37 @@ async def get_case_shortest_path(
         pass
     # Fallback to NetworkX
     graph_service.rebuild_from_db(db)
-    res = graph_service.shortest_path(from_id, to_id)
-    if res is None:
-        raise HTTPException(status_code=404, detail="No path found between the specified nodes")
-    return res
+    result = graph_service.shortest_path(from_id, to_id)
+    if result is None:
+        raise HTTPException(404, "No path found between the specified entities")
+    return result
 
 
 @router.get("/{case_id}/centrality")
 async def get_case_centrality(case_id: str, db: Session = Depends(get_db)):
-    """Compute betweenness centrality for all nodes in the case graph."""
+    """Calculate betweenness centrality to identify key intelligence bridge nodes."""
     try:
         async with get_neo4j_session() as session:
-            scores = await gs.betweenness_centrality(session, case_id=case_id)
-            if scores:
-                return scores
+            cent = await gs.betweenness_centrality(session)
+            if cent:
+                return cent
     except Exception:
         pass
-    # Fallback to NetworkX
     graph_service.rebuild_from_db(db)
     return graph_service.centrality()
 
 
 @router.get("/{case_id}/communities")
 async def get_case_communities(case_id: str, db: Session = Depends(get_db)):
-    """Detect Louvain communities within the case graph."""
+    """Run Louvain community detection to group clusters of aliases and infrastructure."""
     try:
         async with get_neo4j_session() as session:
-            comms = await gs.louvain_communities(session, case_id=case_id)
-            if comms:
-                return {"communities": comms}
+            comms = await gs.louvain_communities(session)
+            if comms and comms.get("communities"):
+                return comms
     except Exception:
         pass
-    # Fallback to NetworkX Louvain
+    # NetworkX Louvain fallback
     import networkx as nx
     graph_service.rebuild_from_db(db)
     undirected = graph_service.g.to_undirected()
@@ -115,69 +120,32 @@ async def get_case_communities(case_id: str, db: Session = Depends(get_db)):
     }
 
 
-@router.post("/{case_id}/node")
-async def add_case_node(
+@router.post("/{case_id}/annotate")
+def add_case_annotation(
     case_id: str,
-    body: NodeCreate,
-    user=Depends(require_role("analyst"))
+    body: AnnotateBody,
+    user=Depends(require_role("analyst")),
+    db: Session = Depends(get_db)
 ):
-    """Manually add an entity node to the case graph."""
-    try:
-        async with get_neo4j_session() as session:
-            query = """
-            MERGE (n:Entity {id: $id})
-            SET n.label = $label,
-                n.type = $type,
-                n.case_id = $case_id,
-                n += $properties
-            RETURN n
-            """
-            await session.run(
-                query,
-                id=body.id,
-                label=body.label,
-                type=body.type,
-                case_id=case_id,
-                properties=body.properties
-            )
-            return {"status": "created", "node_id": body.id, "case_id": case_id}
-    except Exception as exc:
-        # Dev fallback: add to in-memory graph
-        graph_service.g.add_node(body.id, label=body.label, type=body.type, case_id=case_id, **body.properties)
-        return {"status": "created_in_memory", "node_id": body.id, "case_id": case_id, "note": str(exc)}
+    """Add an analyst note or observation to a graph node."""
+    from app.models import GraphAnnotation
+    from app.modules.audit import append_audit
 
+    ann = GraphAnnotation(
+        node_id=body.node_id,
+        note=body.note,
+        author=user.username if user else body.author
+    )
+    db.add(ann)
+    db.commit()
+    db.refresh(ann)
 
-@router.post("/{case_id}/edge")
-async def add_case_edge(
-    case_id: str,
-    body: EdgeCreate,
-    user=Depends(require_role("analyst"))
-):
-    """Manually add a relationship edge between two nodes."""
-    try:
-        async with get_neo4j_session() as session:
-            await gs.add_edge(
-                session,
-                from_id=body.from_id,
-                to_id=body.to_id,
-                rel_type=body.rel_type,
-                confidence=body.confidence
-            )
-            return {
-                "status": "created",
-                "source": body.from_id,
-                "target": body.to_id,
-                "relation": body.rel_type,
-                "confidence": body.confidence
-            }
-    except Exception as exc:
-        # Dev fallback: add to in-memory graph
-        graph_service.g.add_edge(body.from_id, body.to_id, relation=body.rel_type, confidence=body.confidence)
-        return {
-            "status": "created_in_memory",
-            "source": body.from_id,
-            "target": body.to_id,
-            "relation": body.rel_type,
-            "confidence": body.confidence,
-            "note": str(exc)
-        }
+    append_audit(
+        db,
+        actor=user.username if user else body.author,
+        action="graph.annotated",
+        entity_ids=[case_id, ann.id],
+        detail=f"Annotated node {body.node_id}: {body.note[:40]}..."
+    )
+
+    return {"status": "ok", "annotation_id": ann.id, "node_id": ann.node_id, "note": ann.note}

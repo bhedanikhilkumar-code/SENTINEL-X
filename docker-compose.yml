@@ -1,22 +1,23 @@
 version: '3.8'
 
-# SENTINEL-X — Production Orchestration Stack for NTRO (SIH26151)
-# Services: PostgreSQL 16, Neo4j 5, Redis 7, ChromaDB, Tor Proxy, FastAPI Backend, Celery Worker, Next.js Frontend
+# ==============================================================================
+# SENTINEL-X — Complete 9-Service Production Orchestration Stack for NTRO (SIH26151)
+# ==============================================================================
 
 services:
-  # ── 1. Relational Database (Module F & Core Entities) ─────────────────────
-  db:
+  # ── 1. Relational Database (PostgreSQL 16) ──────────────────────────────────
+  postgres:
     image: postgres:16-alpine
-    container_name: sentinelx-db
+    container_name: sentinelx-postgres
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-sentinel}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sentinel123}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sentinelx_secret}
       POSTGRES_DB: ${POSTGRES_DB:-sentinelx}
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sentinel -d sentinelx"]
       interval: 5s
@@ -25,16 +26,16 @@ services:
     networks:
       - sentinel-net
 
-  # ── 2. Graph Database (Module E Knowledge Graph) ──────────────────────────
+  # ── 2. Graph Database (Neo4j 5.18 Community) ───────────────────────────────
   neo4j:
-    image: neo4j:5-community
+    image: neo4j:5.18-community
     container_name: sentinelx-neo4j
     restart: unless-stopped
     ports:
-      - "7474:7474"   # Neo4j Browser UI
-      - "7687:7687"   # Bolt Driver Protocol
+      - "7474:7474"   # HTTP Browser Console
+      - "7687:7687"   # Bolt Protocol
     environment:
-      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/sentinel123}
+      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/sentinelx_graph_2026}
       NEO4J_PLUGINS: '["apoc"]'
       NEO4J_dbms_security_procedures_unrestricted: "apoc.*"
     volumes:
@@ -47,7 +48,7 @@ services:
     networks:
       - sentinel-net
 
-  # ── 3. Cache & Message Broker (Module A & Task Queues) ────────────────────
+  # ── 3. Cache & Celery Broker (Redis 7) ─────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: sentinelx-redis
@@ -64,13 +65,13 @@ services:
     networks:
       - sentinel-net
 
-  # ── 4. Vector Database (Module C SBERT & Authorship Vectors) ─────────────
+  # ── 4. Vector Database (ChromaDB) ─────────────────────────────────────────
   chromadb:
     image: chromadb/chroma:latest
     container_name: sentinelx-chromadb
     restart: unless-stopped
     ports:
-      - "8001:8000"   # External 8001 to prevent conflict with local dev
+      - "8001:8000"   # External 8001 mapped to container 8000
     environment:
       IS_PERSISTENT: "TRUE"
       PERSIST_DIRECTORY: "/chroma/chroma"
@@ -81,14 +82,14 @@ services:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/heartbeat || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
     networks:
       - sentinel-net
 
-  # ── 5. Tor SOCKS5 & Circuit Rotation Proxy (Module A Darkweb Collection) ──
-  tor:
+  # ── 5. Tor SOCKS5 & Control Proxy ─────────────────────────────────────────
+  tor-proxy:
     image: dperson/torproxy:latest
-    container_name: sentinelx-tor
+    container_name: sentinelx-tor-proxy
     restart: unless-stopped
     ports:
       - "9050:9050"   # Tor SOCKS5 Proxy
@@ -96,10 +97,15 @@ services:
     environment:
       TOR_ControlPort: 9051
       TOR_CookieAuthentication: 0
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 9050 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - sentinel-net
 
-  # ── 6. SENTINEL-X Backend (FastAPI Core Engine) ───────────────────────────
+  # ── 6. FastAPI Backend Core Engine ────────────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -107,20 +113,21 @@ services:
     container_name: sentinelx-backend
     restart: unless-stopped
     ports:
-      - "8100:8100"
+      - "8000:8000"
     environment:
-      - PORT=8100
-      - DATABASE_URL=postgresql+asyncpg://sentinel:sentinel123@db:5432/sentinelx
-      - SYNC_DATABASE_URL=postgresql+psycopg2://sentinel:sentinel123@db:5432/sentinelx
+      - PORT=8000
+      - DATABASE_URL=postgresql+asyncpg://sentinel:sentinelx_secret@postgres:5432/sentinelx
+      - SYNC_DATABASE_URL=postgresql+psycopg2://sentinel:sentinelx_secret@postgres:5432/sentinelx
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=sentinel123
+      - NEO4J_PASSWORD=sentinelx_graph_2026
       - REDIS_URL=redis://redis:6379/0
       - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000
-      - TOR_SOCKS_HOST=tor
+      - CHROMA_DATA_DIR=/data/chromadb
+      - TOR_SOCKS_HOST=tor-proxy
       - TOR_SOCKS_PORT=9050
-      - TOR_CONTROL_HOST=tor
+      - TOR_CONTROL_HOST=tor-proxy
       - TOR_CONTROL_PORT=9051
       - SECRET_KEY=83f9f958cc517520e979a44ddbb087d353b3bee4b542942cb948ab263984686b
       - ALGORITHM=HS256
@@ -129,7 +136,7 @@ services:
     volumes:
       - export_data:/app/exports
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
       neo4j:
         condition: service_healthy
@@ -137,51 +144,68 @@ services:
         condition: service_healthy
       chromadb:
         condition: service_healthy
-    command: >
-      sh -c "alembic upgrade head &&
-             python -m app.seed &&
-             python -m uvicorn app.main:app --host 0.0.0.0 --port 8100"
+      tor-proxy:
+        condition: service_healthy
+    command: sh -c "python scripts/seed_production.py && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8100/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - sentinel-net
 
-  # ── 7. Asynchronous Celery Worker (Pipeline & PDF Export Tasks) ────────────
-  celery_worker:
+  # ── 7. Asynchronous Celery Worker ─────────────────────────────────────────
+  celery-worker:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: sentinelx-celery-worker
     restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql+asyncpg://sentinel:sentinel123@db:5432/sentinelx
-      - SYNC_DATABASE_URL=postgresql+psycopg2://sentinel:sentinel123@db:5432/sentinelx
+      - DATABASE_URL=postgresql+asyncpg://sentinel:sentinelx_secret@postgres:5432/sentinelx
+      - SYNC_DATABASE_URL=postgresql+psycopg2://sentinel:sentinelx_secret@postgres:5432/sentinelx
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=sentinel123
+      - NEO4J_PASSWORD=sentinelx_graph_2026
       - REDIS_URL=redis://redis:6379/0
       - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000
-      - TOR_SOCKS_HOST=tor
+      - CHROMA_DATA_DIR=/data/chromadb
+      - TOR_SOCKS_HOST=tor-proxy
       - TOR_SOCKS_PORT=9050
-      - TOR_CONTROL_HOST=tor
+      - TOR_CONTROL_HOST=tor-proxy
       - TOR_CONTROL_PORT=9051
       - ENVIRONMENT=production
     volumes:
       - export_data:/app/exports
     depends_on:
-      backend:
-        condition: service_healthy
       redis:
         condition: service_healthy
-    command: celery -A app.workers.celery_app.celery_app worker -l info -Q ingestion,export,default -c 2
+      postgres:
+        condition: service_healthy
+    command: celery -A app.workers.celery_app worker -l info -Q default,ingestion,export
     networks:
       - sentinel-net
 
-  # ── 8. SENTINEL-X Frontend (Next.js Dashboard) ───────────────────────────
+  # ── 8. Celery Beat Periodic Scheduler ─────────────────────────────────────
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sentinelx-celery-beat
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A app.workers.celery_app beat -l info
+    networks:
+      - sentinel-net
+
+  # ── 9. Frontend (React + Vite + Nginx Dashboard) ───────────────────────────
   frontend:
     build:
       context: ./frontend
@@ -193,18 +217,16 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - BACKEND_URL=http://backend:8100
-      - NEXT_PUBLIC_API_BASE=http://localhost:8100
+      - BACKEND_URL=http://backend:8000
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - sentinel-net
 
 # ── Persistent Storage Volumes ───────────────────────────────────────────────
 volumes:
-  pg_data:
-    name: sentinelx_pg_data
+  postgres_data:
+    name: sentinelx_postgres_data
   neo4j_data:
     name: sentinelx_neo4j_data
   redis_data:
@@ -214,7 +236,7 @@ volumes:
   export_data:
     name: sentinelx_export_data
 
-# ── Isolated Enterprise Docker Bridge Network ───────────────────────────────
+# ── Enterprise Docker Bridge Network ────────────────────────────────────────
 networks:
   sentinel-net:
     name: sentinelx-network

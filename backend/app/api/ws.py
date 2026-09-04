@@ -1,80 +1,83 @@
-"""Real-Time WebSocket Feed API for SOC & Intelligence Analysts (PRD §3.A & §3.E)."""
-from typing import Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, HTTPException
-from pydantic import BaseModel
+"""Module E / SOC — Real-Time WebSocket Updates & Alert Stream (PRD §3.A & §3.E).
 
-from app.modules.websocket_manager import ws_manager
+Events Handled:
+- Case feed (/ws/cases/{case_id}):
+  - "node_added" — new entity discovered in Neo4j
+  - "edge_added" — new correlation edge
+  - "confidence_updated" — C_total changed
+  - "task_progress" — ingestion progress (0-100%)
+  - "alert" — high-confidence match found (C_i > 0.85)
+- Global feed (/ws/alerts):
+  - "new_case" — case opened
+  - "critical_attribution" — actor de-anonymized (C_total > 0.90)
+  - "tor_circuit_rotated" — new IP acquired
+"""
+import asyncio
+import json
+import logging
+from typing import Any, Dict, List, Optional
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-router = APIRouter(prefix="/api/ws", tags=["websockets"])
+from app.websocket.manager import manager
+
+logger = logging.getLogger("sentinelx.ws.api")
+router = APIRouter(tags=["websockets"])
 
 
-class BroadcastEventBody(BaseModel):
-    event_type: str
-    data: dict
-    case_id: Optional[str] = None
-
-
-@router.websocket("/feed")
-async def general_threat_feed(
-    websocket: WebSocket,
-    client_id: str = Query("analyst_general")
-):
-    """
-    WebSocket endpoint for real-time global threat feed.
-    Receives Tor ingestion alerts, new dark web forum posts, and system status pings.
-    """
-    await ws_manager.connect(websocket, client_id=client_id, case_id=None)
+@router.websocket("/ws/cases/{case_id}")
+async def case_websocket_endpoint(websocket: WebSocket, case_id: str):
+    """Case-specific real-time telemetry stream."""
+    await manager.connect(websocket, case_id=case_id)
     try:
         while True:
-            # Listen for client pings or subscription changes
-            text = await websocket.receive_text()
-            if text == "ping":
-                await websocket.send_text('{"type": "pong"}')
+            # Keep connection alive and accept analyst pings
+            data = await websocket.receive_text()
+            try:
+                msg = json.loads(data)
+                if msg.get("type") == "ping":
+                    await manager.send_personal(websocket, {"type": "pong", "case_id": case_id})
+            except Exception:
+                pass
     except WebSocketDisconnect:
-        ws_manager.disconnect(websocket)
-    except Exception:
-        ws_manager.disconnect(websocket)
+        manager.disconnect(websocket, case_id=case_id)
 
 
-@router.websocket("/case/{case_id}")
-async def case_intelligence_feed(
-    websocket: WebSocket,
-    case_id: str,
-    client_id: str = Query("analyst_case")
-):
-    """
-    WebSocket endpoint for case-specific live intelligence updates.
-    Streams extracted PGP keys, crypto transactions, stylometric similarity alerts, and timeline growth.
-    """
-    await ws_manager.connect(websocket, client_id=client_id, case_id=case_id)
+@router.websocket("/ws/alerts")
+async def global_alerts_websocket_endpoint(websocket: WebSocket):
+    """Global SOC alerts and critical de-anonymization broadcast feed."""
+    await manager.connect(websocket, case_id=None)
     try:
         while True:
-            text = await websocket.receive_text()
-            if text == "ping":
-                await websocket.send_text('{"type": "pong"}')
+            data = await websocket.receive_text()
+            try:
+                msg = json.loads(data)
+                if msg.get("type") == "ping":
+                    await manager.send_personal(websocket, {"type": "pong"})
+            except Exception:
+                pass
     except WebSocketDisconnect:
-        ws_manager.disconnect(websocket)
+        manager.disconnect(websocket, case_id=None)
+
+
+def broadcast_case_event(case_id: str, event: str, data: Any):
+    """Synchronous/async helper to broadcast event to case room."""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(manager.broadcast_case(case_id, event, data))
+        else:
+            loop.run_until_complete(manager.broadcast_case(case_id, event, data))
     except Exception:
-        ws_manager.disconnect(websocket)
+        pass
 
 
-@router.get("/clients")
-def get_connected_clients():
-    """Retrieve current WebSocket telemetry and active subscriber metrics."""
-    return ws_manager.get_stats()
-
-
-@router.post("/broadcast")
-async def trigger_broadcast(body: BroadcastEventBody):
-    """Internal/worker endpoint to broadcast intelligence alerts into the WebSocket channels."""
-    await ws_manager.broadcast(
-        event_type=body.event_type,
-        data=body.data,
-        case_id=body.case_id
-    )
-    return {
-        "status": "broadcast_sent",
-        "event_type": body.event_type,
-        "case_id": body.case_id,
-        "active_clients": len(ws_manager.active_connections)
-    }
+def broadcast_global_event(event: str, data: Any):
+    """Synchronous/async helper to broadcast event to global feed."""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(manager.broadcast_global(event, data))
+        else:
+            loop.run_until_complete(manager.broadcast_global(event, data))
+    except Exception:
+        pass

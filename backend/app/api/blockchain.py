@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.db import get_db
+from app.database import get_db
 from app.auth.dependencies import require_role
 from app.models import WalletCluster, Case, Artifact, WalletTag
 from app.modules.blockchain import (
@@ -43,8 +43,8 @@ class TagRequest(BaseModel):
     case_id: Optional[str] = None
 
 
-# NEW (Step 7.2): GET /api/blockchain/trace/{address} — full wallet trace with hops
 @router.get("/trace/{address}")
+@router.post("/trace/{address}")
 def get_wallet_trace(
     address: str,
     currency: str = Query("BTC", description="Cryptocurrency symbol (BTC, ETH, XMR)"),
@@ -54,150 +54,109 @@ def get_wallet_trace(
     return trace_wallet_fn(address=address, currency=currency, depth=max_depth)
 
 
-# NEW (Step 7.2): GET /api/blockchain/cluster — clusters list of addresses
 @router.get("/cluster")
 def get_wallet_clusters(
     addresses: Optional[List[str]] = Query(None),
-    case_id: Optional[str] = None,
+    case_id: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
-    """PRD §3.D: Common-input-ownership clustering on crypto addresses via GET query."""
-    target_addresses = list(addresses or [])
-    if not target_addresses and case_id:
-        artifacts = db.query(Artifact).filter(
-            Artifact.artifact_type.in_(["btc_address", "eth_address", "wallet_address", "xmr_address"])
-        ).all()
-        target_addresses = [a.value for a in artifacts]
-
-    clusters = cluster_wallets_fn(addresses=target_addresses, db=db, case_id=case_id)
-    return {
-        "status": "success",
-        "total_clusters": len(clusters),
-        "clusters": clusters
-    }
-
-
-# KEPT: POST /api/blockchain/cluster for JSON body queries
-@router.post("/cluster")
-def post_cluster_wallets(body: ClusterRequest, db: Session = Depends(get_db)):
-    """PRD §3.D: Common-input-ownership clustering on crypto addresses via POST body."""
-    target_addresses = list(body.addresses or [])
-
-    if not target_addresses and body.case_id:
-        artifacts = db.query(Artifact).filter(
-            Artifact.artifact_type.in_(["btc_address", "eth_address", "wallet_address", "xmr_address"])
-        ).all()
-        target_addresses = [a.value for a in artifacts]
-
-    clusters = cluster_wallets_fn(
-        addresses=target_addresses,
-        db=db,
-        case_id=body.case_id
-    )
-
-    if body.case_id:
-        append_audit(
-            db=db,
-            actor="blockchain_engine",
-            action="blockchain.clustered",
-            entity_ids=[body.case_id],
-            detail=f"Identified {len(clusters)} wallet clusters for case {body.case_id}"
+    """Cluster wallets by common-input co-spending heuristic and known exchange deposit links."""
+    addrs_to_cluster = list(addresses or [])
+    if case_id and not addrs_to_cluster:
+        arts = (
+            db.query(Artifact)
+            .filter(Artifact.artifact_type.in_(["btc_address", "eth_address", "xmr_address"]))
+            .all()
         )
+        addrs_to_cluster = [a.value for a in arts]
 
-    return {
-        "status": "success",
-        "total_clusters": len(clusters),
-        "clusters": clusters
-    }
+    if not addrs_to_cluster:
+        return {"total_clusters": 0, "clusters": []}
+
+    res = cluster_wallets_fn(addrs_to_cluster)
+    return res
 
 
-# NEW (Step 7.2): GET /api/blockchain/taint/{address} — taint analysis against known entities
+@router.post("/cluster")
+def post_wallet_clusters(body: ClusterRequest, db: Session = Depends(get_db)):
+    """Cluster wallets via POST request body."""
+    addrs = body.addresses or []
+    if body.case_id and not addrs:
+        arts = (
+            db.query(Artifact)
+            .filter(Artifact.artifact_type.in_(["btc_address", "eth_address", "xmr_address"]))
+            .all()
+        )
+        addrs = [a.value for a in arts]
+
+    return cluster_wallets_fn(addrs)
+
+
+@router.get("/peel-chain/{address}")
+def get_peel_chain(address: str, max_hops: int = Query(5, ge=1, le=10)):
+    """Detect peeling chain transaction patterns commonly used by ransomware actors."""
+    return detect_peel_chain(address, max_hops=max_hops)
+
+
+@router.post("/peel-chain")
+def post_peel_chain(body: PeelChainRequest):
+    """Detect peeling chain via POST request."""
+    return detect_peel_chain(body.address, max_hops=body.max_hops)
+
+
+@router.get("/risk/{address}")
+def get_address_risk(address: str):
+    """Calculate composite risk score (0.0–1.0) and sanctions exposure for a cryptocurrency address."""
+    return calculate_address_risk(address)
+
+
 @router.get("/taint/{address}")
-def get_wallet_taint(address: str):
-    """PRD §3.D: Taint analysis against OFAC sanctions, darknet markets, and mixer pools."""
-    return analyze_wallet_taint(address=address)
+def get_address_taint(address: str, max_depth: int = Query(3, ge=1, le=5)):
+    """Perform forward taint tracking from known darknet and mixer entities."""
+    return analyze_wallet_taint(address, depth=max_depth)
 
 
-# NEW (Step 7.2): POST /api/blockchain/tag — tag address (analyst annotation)
 @router.post("/tag")
-def tag_wallet_address(
+def add_wallet_tag(
     body: TagRequest,
-    db: Session = Depends(get_db),
-    user=Depends(require_role("analyst"))
+    user=Depends(require_role("analyst")),
+    db: Session = Depends(get_db)
 ):
-    """PRD §3.D: Add analyst annotations, sanctions tags, or forensic notes to a cryptocurrency address."""
-    actor_id = user.id if user else "analyst_demo"
-    tag_rec = WalletTag(
+    """Apply an analyst tag to an address and record in audit log."""
+    tag = WalletTag(
         address=body.address,
         tag=body.tag,
         category=body.category,
         notes=body.notes,
-        author=actor_id
+        author=user.username if user else "analyst_demo"
     )
-    db.add(tag_rec)
+    db.add(tag)
     db.commit()
-    db.refresh(tag_rec)
+    db.refresh(tag)
 
     append_audit(
-        db=db,
-        actor=actor_id,
-        action="blockchain.tagged",
-        entity_ids=[body.address],
-        detail=f"Tagged address {body.address} as '{body.tag}' [{body.category}]"
+        db,
+        actor=user.username if user else "analyst_demo",
+        action="wallet.tagged",
+        entity_ids=[tag.id],
+        detail=f"Tagged wallet {body.address[:16]}... as '{body.tag}' ({body.category})"
     )
 
-    return {
-        "status": "success",
-        "id": tag_rec.id,
-        "address": tag_rec.address,
-        "tag": tag_rec.tag,
-        "category": tag_rec.category,
-        "notes": tag_rec.notes,
-        "author": tag_rec.author,
-        "created_at": tag_rec.created_at.isoformat()
-    }
+    return {"status": "ok", "tag_id": tag.id, "address": tag.address, "tag": tag.tag}
 
 
-@router.get("/risk/{address}")
-def get_wallet_risk(address: str):
-    """PRD §3.D: Address risk score, darknet tags, and mixer exposure breakdown."""
-    return calculate_address_risk(address)
-
-
-@router.post("/peel-chain")
-def analyze_peel_chain(body: PeelChainRequest):
-    """PRD §3.D: Detect and trace peel chain hops and terminal exit point."""
-    return detect_peel_chain(start_address=body.address, max_hops=body.max_hops)
-
-
-@router.get("/clusters")
-def list_clusters(case_id: Optional[str] = None, db: Session = Depends(get_db)):
-    """Retrieve all persisted wallet clusters."""
-    query = db.query(WalletCluster)
-    if case_id:
-        query = query.filter(WalletCluster.case_id == case_id)
-    records = query.all()
-
+@router.get("/tags/{address}")
+def get_wallet_tags(address: str, db: Session = Depends(get_db)):
+    """Retrieve all analyst tags for a given cryptocurrency address."""
+    tags = db.query(WalletTag).filter_by(address=address).all()
     return [
         {
-            "id": r.id,
-            "addresses": r.addresses,
-            "cluster_type": r.cluster_type,
-            "exchange_flag": r.exchange_flag,
-            "confidence": r.confidence,
-            "case_id": r.case_id,
-            "created_at": r.created_at.isoformat() if r.created_at else None
+            "id": t.id,
+            "tag": t.tag,
+            "category": t.category,
+            "notes": t.notes,
+            "author": t.author,
+            "created_at": str(t.created_at)
         }
-        for r in records
+        for t in tags
     ]
-
-
-@router.get("/directory")
-def get_directory():
-    """Returns catalog of known exchanges, mixers, sanctioned entities, and tagged darknet wallets."""
-    return {
-        "known_exchanges": KNOWN_EXCHANGE_DEPOSITS,
-        "known_mixers": KNOWN_MIXER_ADDRESSES,
-        "known_darknet_wallets": KNOWN_DARKNET_WALLETS,
-        "known_ofac_sanctioned": KNOWN_OFAC_SANCTIONED
-    }

@@ -1,275 +1,236 @@
-<div align="center">
+# SENTINEL-X: Dark Web Threat Actor De-Anonymization Platform
+### National Technical Research Organisation (NTRO) — SIH26151
 
-# 🗡️ SENTINEL-X
-### **Military-Grade Dark Web Threat Actor De-Anonymization Platform**
-#### *Smart India Hackathon (SIH 2026) — Problem Statement ID: SIH26151*
-**Sponsoring Organisation:** National Technical Research Organisation (NTRO)  
-**Theme:** Blockchain & Cybersecurity | **Category:** Software | **Status:** Production-Ready MVP
-
----
-
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary%20%2F%20All%20Rights%20Reserved-red.svg?style=for-the-badge&logo=shield)](LICENSE)
-[![Cloudflare Pages Live](https://img.shields.io/badge/Live%20Platform-sentinel--tor.pages.dev-F38020.svg?style=for-the-badge&logo=cloudflare&logoColor=white)](https://sentinel-tor.pages.dev)
-[![SIH 2026](https://img.shields.io/badge/SIH%202026-Problem%20SIH26151-06b6d4.svg?style=for-the-badge&logo=target)](https://www.sih.gov.in/)
-[![Sponsor: NTRO](https://img.shields.io/badge/Sponsor-NTRO-10b981.svg?style=for-the-badge&logo=defense)](https://ntro.gov.in/)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20v0.115-009688.svg?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
-[![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014%20%7C%20React%2018-000000.svg?style=for-the-badge&logo=next.js)](https://nextjs.org)
-[![Tests: 100% Passed](https://img.shields.io/badge/Rehearsal%20Tests-7%2F7%20Passed%20(100%25)-brightgreen.svg?style=for-the-badge&logo=checkmarx)](run_tests.bat)
-[![Docker](https://img.shields.io/badge/Docker-Multi--Container%20Ready-2496ED.svg?style=for-the-badge&logo=docker)](docker-compose.yml)
-
-</div>
+[![Architecture](https://img.shields.io/badge/Architecture-Distributed%20Microservices-blue.svg)]()
+[![Security](https://img.shields.io/badge/Compliance-Indian%20Evidence%20Act%20§65B-emerald.svg)]()
+[![Docker](https://img.shields.io/badge/Docker%20Compose-9%20Services-cyan.svg)]()
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20Async-009688.svg)]()
+[![Frontend](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61dafb.svg)]()
 
 ---
 
-## 📑 Executive Summary
+## 1. Executive Summary
 
-Modern cybercrime cartels, ransomware syndicates, and state-sponsored APTs exploit onion routing (**Tor**), invisible internet projects (**I2P**), and encrypted channels (**Telegram**) under the perceived cloak of absolute anonymity. Law enforcement agencies (LEAs) and national intelligence bodies routinely suffer from:
-1. **Fragmented Workflows:** Analysts manually toggle across dozens of browser tabs, raw memory dumps, blockchain explorers, and unstructured notes.
-2. **High False-Positive Attribution:** Heuristics frequently conflate pseudonyms or jump to premature conclusions based on single, fragile signals.
-3. **Inadmissible Evidence:** Ad-hoc screenshots and unhashed evidence routinely fail Section 65B standards under the **Indian Evidence Act** during courtroom scrutiny.
-4. **Investigative Fatigue:** Resolving a single multi-layered extortion or ransomware campaign often requires weeks of manual pivot operations.
+**SENTINEL-X** is an intelligence-grade, court-admissible SaaS de-anonymization platform architected for cyber defense analysts, national security agencies, and law enforcement task forces. 
 
-**SENTINEL-X** solves this operational bottleneck. Engineered to military-grade intelligence standards, SENTINEL-X operates on a core scientific doctrine: **Do not hunt for an elusive single smoking gun. Instead, mathematically correlate residual cryptographic, linguistic, behavioral, and transactional residue left behind by threat actors.**
+The system cross-correlates dark web threat actor footprints across linguistic stylometry, cryptocurrency transaction flows, PGP key infrastructures, temporal activity clusters, and clearnet identities. Every piece of intelligence is linked into an immutable SHA-256 audit ledger fulfilling the stringent legal admissibility requirements of **Section 65B of the Indian Evidence Act**.
+
+```
+   ┌─────────────────────────────────────────────────────────────────────────────┐
+   │                               SENTINEL-X ARCHITECTURE                       │
+   └─────────────────────────────────────────────────────────────────────────────┘
+          │
+          ├── [Module A] Tor Circuit Crawler (Stem SOCKS5 + NEWNYM rotation)
+          ├── [Module B] Artifact Extraction (BTC, ETH, XMR, PGP, SSH, Emails)
+          ├── [Module C] Stylometric Forensics (SBERT 384D + JS-Divergence + Diurnal)
+          ├── [Module D] Multi-Hop Blockchain Tracer (UTXO Peel Chains + Mixers + KYC)
+          ├── [Module E] Knowledge Graph Intelligence (Neo4j Cypher + Centrality)
+          ├── [Module F] Cryptographic Audit Chain & Merkle Tree (§65B Compliant)
+          └── [Module G] Court-Admissible 6-Page PDF Dossier Generator (ReportLab)
+```
 
 ---
 
-## 🏛️ System Architecture: The 6 Core Modules
-
-SENTINEL-X faithfully realizes all 6 functional tiers outlined in the official **NTRO SIH26151 PRD**:
+## 2. System Architecture
 
 ```mermaid
-flowchart TB
-    subgraph Ingestion ["MODULE A: OPSEC-Isolated Ingestion"]
-        Tor["Tor SOCKS5 Proxy\n(Isolated Circuit / Privoxy)"] --> Dedup["SHA-256 Digest &\nDeterministic Deduplication"]
-        Assisted["Assisted-Browsing Queue\n(Human-in-the-Loop CAPTCHA)"] --> Dedup
+flowchart TD
+    subgraph Ingestion["Ingestion & Tor Network Layer"]
+        A1[Dark Web Onion Forums / Ransomware Leaks] -->|Stem SOCKS5 + Circuit Rotation| A2[Tor Collector / Ingest API]
+        A2 -->|Raw Text / HTML| A3[Async Task Queue Celery + Redis]
     end
 
-    subgraph Extraction ["MODULE B: Artifact Extractor"]
-        Dedup --> PurePy["Regex & Deterministic Parsers\n(Unicode Normalization)"]
-        PurePy --> PGP["PGP Key Armor\n(8-Byte Key ID)"]
-        PurePy --> Crypto["Cryptocurrency Wallets\n(BTC Base58Check, ETH EIP-55, XMR, TRX)"]
-        PurePy --> Infra["Network Anchors\n(SSH Hostkeys, .onion domains, IPs)"]
+    subgraph Analytics["Analytics & Intelligence Engines"]
+        A3 --> B1[Extraction Engine Module B]
+        A3 --> B2[Stylometry Engine SBERT Module C]
+        A3 --> B3[Blockchain UTXO Tracer Module D]
+        
+        B1 -->|Artifacts & Keys| C1[(PostgreSQL 16)]
+        B2 -->|384D Semantic Embeddings| C2[(ChromaDB Vector Store)]
+        B3 -->|Multi-Hop Clusters| C3[(Neo4j Graph DB)]
     end
 
-    subgraph Analytics ["MODULE C: Stylometry & Diurnal NLP"]
-        Dedup --> JSD["Jensen-Shannon Divergence\n(Function-Word Distributions)"]
-        Dedup --> Circadian["Circadian Timezone Fitting\n(24-Hour UTC Diurnal Histogram)"]
-        Dedup --> Typo["Typo n-Gram Fingerprinting\n(Oxford Comma / Em-Dash Bias)"]
-        Dedup --> Anomaly["Multi-Author Bimodal Anomaly &\nMachine-Translation Residue Detector"]
+    subgraph Core["Platform Core & Security Layer"]
+        C1 & C2 & C3 --> D1[FastAPI Microservices Hub]
+        D1 --> D2[RBAC Engine: 4 Roles]
+        D1 --> D3[Audit Chain Engine SHA-256 Ledger]
+        D1 --> D4[ReportLab 6-Page PDF Dossier Engine]
     end
 
-    subgraph CorrelationEngine ["MODULE D: Probabilistic Correlation Engine"]
-        PGP & Crypto & Infra & JSD & Circadian & Typo --> Bayes["Independence-Weighted Formulation:\nC_total = 1 - ∏(1 - Ci · Wi)"]
-        Bayes --> Hypotheses["Ranked Hypotheses &\nConfidence Breakdown"]
-    end
-
-    subgraph KnowledgeGraph ["MODULE E: Interactive Graph Pivot Engine"]
-        Hypotheses --> Cytoscape["Interactive Cytoscape Engine\n(22 Nodes, 23 Relations)"]
-        Cytoscape --> Flow["Shortest-Path Flow to Cash-Out Exit"]
-        Cytoscape --> Betweenness["Betweenness Centrality Broker Analysis"]
-    end
-
-    subgraph AuditCustody ["MODULE F: Cryptographic Chain-of-Custody"]
-        Cytoscape & Hypotheses --> Merkle["Merkle Hash-Chain Audit Log\n(SHA-256 Linked Leaves)"]
-        Merkle --> Tamper["Real-Time Cryptographic\nTamper Verification"]
-        Merkle --> Dossier["1-Click Court-Admissible\nForensic PDF Dossier Export (Section 65B)"]
+    subgraph Client["Presentation & Operations"]
+        D1 -->|REST APIs + WebSockets| E1[React 18 + Vite SPA Cyber UI]
+        E1 --> E2[Cytoscape Knowledge Graph]
+        E1 --> E3[Leaflet 2D Geospatial Map]
+        E1 --> E4[Radar & Diurnal Charts]
+        E1 --> E5[Court Admissible Dossier Exporter]
     end
 ```
 
-### Detailed Functional Matrix
+---
 
-| Module | Name | Algorithmic / Mathematical Core | Key Capabilities | Code Path |
-|:---:|---|---|---|---|
-| **A** | **Tor Ingestion Hub** | SHA-256 Digest Anchoring + Privoxy Header Scrubbing | Isolated SOCKS5 collector, Tor circuit rotation (`NEWNYM`), deterministic deduplication, human-in-the-loop CAPTCHA assistance queue. | `backend/app/api/ingest.py` |
-| **B** | **Cryptographic Artifact Extractor** | Pure-Python Keccak-256 EIP-55 + Base58Check | Deterministic extraction of PGP keys, Bitcoin (P2PKH, P2SH, Bech32), Ethereum, Monero stealth addresses, TRON, SSH fingerprints, and Unicode homoglyph stripping. | `backend/app/modules/extraction.py` |
-| **C** | **Stylometry & NLP Profiler** | Jensen-Shannon Divergence ($1 - JS$) + Diurnal Fitting | 50+ function-word distribution vectors, idiosyncratic punctuation analysis (Oxford comma, em-dash), typo n-grams (`"becuase"`), circadian UTC timezone solver, shared-account bimodal anomaly test. | `backend/app/modules/stylometry.py` |
-| **D** | **Correlation & Attribution Engine** | Independence-Weighted Bayesian Model | Multi-signal attribution formula: $C_{total} = 1 - \prod_{i=1}^n (1 - C_i \cdot W_i)$, cross-signal correlation penalty, hypothesis ranking. | `backend/app/modules/correlation.py` |
-| **E** | **Knowledge Graph Pivot Engine** | NetworkX GDS $\rightarrow$ Cytoscape Force-Directed Graph | 22 nodes, 23 relations representing threat actors, aliases, onion leak sites, GitHub commits, Bitcoin clusters, shortest-path tracing to cash-out exchanges, betweenness centrality. | `backend/app/modules/graph_service.py` |
-| **F** | **Audit Trail & Court Dossier** | Merkle Hash-Chain + Section 65B Forensic Engine | Tamper-evident SHA-256 linked log, real-time cryptographic integrity validation, 1-click court-admissible forensic PDF dossier with digital evidence certificate. | `backend/app/modules/audit.py`<br>`backend/app/api/cases.py` |
+## 3. Docker Compose 9-Service Architecture
+
+SENTINEL-X orchestrates 9 dedicated containers within an isolated internal bridge network:
+
+| Service | Image / Base | Internal Port | External Port | Role |
+|---|---|---|---|---|
+| `postgres` | `postgres:16-alpine` | `5432` | `5432` | Primary relational database with Alembic migrations |
+| `neo4j` | `neo4j:5.18-community` | `7474`, `7687` | `7474`, `7687` | Graph database for actor-artifact link analysis |
+| `redis` | `redis:7-alpine` | `6379` | `6379` | Message broker for Celery and pub/sub cache |
+| `chromadb` | `chromadb/chroma:0.4.24` | `8000` | `8001` | High-dimensional SBERT vector embedding store |
+| `tor-proxy` | `osminogin/tor-simple` | `9050`, `9051` | `9050`, `9051` | Tor daemon with Stem circuit controller |
+| `backend` | Python 3.12-slim | `8000` | `8000` | FastAPI REST services, WebSockets, ReportLab |
+| `celery-worker` | Python 3.12-slim | N/A | N/A | Distributed asynchronous document parsing & SBERT inference |
+| `celery-beat` | Python 3.12-slim | N/A | N/A | Periodic crawl scheduler and health monitoring |
+| `frontend` | Node 20 / Nginx Alpine | `3000` | `3000` | React 18 + Vite 5 cyber operations console |
 
 ---
 
-## 🧮 Attribution Mathematics & Algorithmic Rigor
+## 4. Quickstart & Deployment
 
-### 1. Multi-Signal Bayesian Confidence Formulation
-SENTINEL-X strictly rejects "black box" machine learning models that cannot be explained on a witness stand. Instead, all correlations use an explainable **Independence-Weighted Multi-Signal Model**:
+### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/) (v24.0+) & [Docker Compose](https://docs.docker.com/compose/) (v2.20+)
+- Python 3.12+ (for running scripts natively if desired)
+- Node.js 20+ (for local frontend dev)
 
-$$C_{\text{total}} = 1 - \prod_{i=1}^{n} \left(1 - C_i \cdot W_i\right)$$
-
-Where:
-- $C_i \in [0, 1]$ represents the raw confidence of signal $i$ (Cryptographic PGP reuse, Bitcoin co-spend cluster, Stylometric linguistic similarity, Timezone diurnal match).
-- $W_i \in [0.1, 1.0]$ is an **independence penalty weight**: signals derived from the same source document are penalized to prevent double-counting, while orthogonally verified signals receive $W_i = 1.0$.
-
-### 2. Stylometric Jensen-Shannon Divergence
-Textual similarity between dark web manifestos and clearnet developer posts is measured via probability vector divergence:
-
-$$JS(P \parallel Q) = \frac{1}{2} D_{KL}(P \parallel M) + \frac{1}{2} D_{KL}(Q \parallel M) \quad \text{where } M = \frac{1}{2}(P + Q)$$
-
-$$S_{\text{style}} = 1 - \sqrt{JS(P \parallel Q)}$$
-
-Combined with an idiosyncratic typo n-gram Jaccard metric:
-$$J_{\text{typo}} = \frac{|N_A \cap N_B|}{|N_A \cup N_B|}$$
-
-### 3. Diurnal Circadian Timezone Estimation
-By aggregating timestamp activity into a 24-hour UTC circular histogram, the probability distribution of an actor's waking hours is computed:
-
-$$\theta_{\text{peak}} = \operatorname{atan2}\left(\sum_{t} \sin\left(\frac{2\pi h_t}{24}\right), \sum_{t} \cos\left(\frac{2\pi h_t}{24}\right)\right)$$
-
-In our rehearsal case study, an activity peak between **03:00–06:00 UTC** maps with **94.2% empirical confidence** to standard working hours in **UTC+05:30 (Indian Standard Time)**.
-
----
-
-## 💻 Interactive Analyst Workbench UI
-
-Built with **Next.js 14**, **React 18**, **Tailwind CSS**, and **Cytoscape.js**, the SENTINEL-X workbench features a DEFCON-2 tactical dark cyberpunk command aesthetic:
-
-- **🖥️ SOC Joint Command Dashboard:** Live DEFCON status, active targets (`DarkViper`), 24-hour UTC activity bar chart with hover telemetry, high-level confidence indicators, and rapid case status toggles (`open`, `pending_review`, `escalated`, `closed`).
-- **🕸️ Interactive Knowledge Graph:** Full graph pivot engine with dynamic node filtering (Actor, Identity, Forum, Leak, Crypto, Exchange, Email), force-directed layout, node inspector, and 1-click **"Trace Flow to Cash-Out Exit"** highlighting 6 hops from ransomware post to Binance deposit address.
-- **✍️ Stylometry & NLP Forensics:** Side-by-side linguistic comparison, lexical diversity metrics, Oxford-comma and em-dash frequency meters, typo n-gram extraction, and automated checks for **Shared-Account Bimodal Anomalies** and **Machine Translation Residue**.
-- **🌐 Ingestion Hub & Assisted Browsing:** Real-time Tor circuit telemetry, Privoxy header scrubbing indicators, manual document injection with instant SHA-256 hashing, and an analyst-in-the-loop CAPTCHA challenge resolver.
-- **🛡️ Audit & Custody:** Merkle hash chain viewer displaying block index, parent hash, SHA-256 current hash, and an instant **"Cryptographically Verify Chain"** button that detects any retroactive tamper injection within milliseconds.
-- **📄 Court Dossier Generator:** 1-click compilation of a legally vetted, court-admissible PDF dossier featuring official case reference numbers, full evidence logs, cryptographic hashes, and Section 65B evidentiary certification.
-- **🎯 In-App Presentation Deck & Live Pitch Prompter:** Built directly into the UI! Includes a 10-slide interactive SIH presentation deck and an on-screen **Live Pitch Prompter HUD** with second-by-second rehearsal cues for jury evaluation.
-
----
-
-## ⚡ Quick Start & Deployment
-
-> ### 🌐 Official Cloudflare Production Deployment
-> - **Live Public Platform:** **[https://sentinel-tor.pages.dev](https://sentinel-tor.pages.dev)**
-> - **API Health Check:** [https://sentinel-tor.pages.dev/api/health](https://sentinel-tor.pages.dev/api/health)
-> - **Global CDN & SSL:** Cloudflare Mumbai (BOM) Edge Datacenter | Wildcard HTTPS Active
-> - **Accessible:** 24/7 globally on any smartphone, tablet, or PC with zero installation!
-
-### Option 1: One-Click Launchers (Windows)
-- **Launch Full Platform:** Double-click `run_platform.bat`
-- **Deploy/Share Globally via Cloudflare Tunnel:** Double-click `start_cloudflare_tunnel.bat`
-- **Launch via Docker Compose:** Double-click `docker_run.bat` (or run `docker compose up --build`)
-- **Run Automated Rehearsal Suite (All 7 Tests):** Double-click `run_tests.bat`
-- **Push to GitHub:** Double-click `push_to_github.bat`
-
----
-
-### 🐳 Option 2: Docker Multi-Container Deployment
-
+### Launch Entire Platform with 1 Command
 ```bash
-# Clone the repository
-git clone https://github.com/bhedanikhilkumar-code/SENTINEL-X.git
-cd SENTINEL-X
-
-# Build and start services via Docker Compose
-docker compose up --build
+docker compose up --build -d
 ```
-- Frontend Workbench: **`http://localhost:3000`**
-- Backend OpenAPI Docs: **`http://localhost:8000/docs`**
 
----
-
-### 🛠️ Option 3: Manual Developer Setup
-
-#### 1. Backend (FastAPI + Python 3.10+)
+Check status of all 9 containers:
 ```bash
-cd backend
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Linux/macOS:
-source venv/bin/activate
-
-pip install -r requirements.txt
-
-# Seed the fictional "Tracking DarkViper" demonstration case
-python -m app.seed --force
-
-# Launch FastAPI on port 8000
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+docker compose ps
 ```
 
-#### 2. Frontend (Next.js 14 + React 18)
+### Seed Production Intelligence Database
+Populate the system with synthetic target profiles (`PHANTOM-KRYPT` and `VOID-LOCKER`):
 ```bash
-cd frontend
-npm install
-npm run dev
-# Open http://localhost:3000 in your browser
+docker compose exec backend python scripts/seed_production.py
 ```
+*(Or locally: `python backend/scripts/seed_production.py`)*
+
+### Access Points
+- **Web Operations Console**: [http://localhost:3000](http://localhost:3000)
+- **Interactive OpenAPI Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Neo4j Browser Console**: [http://localhost:7474](http://localhost:7474) (user: `neo4j`, pass: `sentinel_graph_2026`)
+- **ChromaDB Healthcheck**: [http://localhost:8001/api/v1/heartbeat](http://localhost:8001/api/v1/heartbeat)
 
 ---
 
-## 🧪 Automated Verification & Test Matrix
+## 5. Role-Based Access Control (RBAC) Test Credentials
 
-SENTINEL-X includes an exhaustive end-to-end automated test suite verifying every layer of the platform:
+The system implements 4 strictly segregated operational tiers:
 
-```
-=================================================================
-   SENTINEL-X: PHASE 6 END-TO-END REHEARSAL & SMOKE TEST SUITE
-   SIH26151 - National Technical Research Organisation (NTRO)
-=================================================================
+| Role | Username | Password | Operational Capabilities |
+|---|---|---|---|
+| **SOC Lead** | `anjali` | `Lead@Sentinel2026!` | Case creation, status escalation/closure, user management, full access |
+| **Senior Analyst** | `vk_senior` | `Senior@Sentinel2026!` | Hypothesis updates, status escalation, evidence tag approval |
+| **Analyst** | `priya` | `Analyst@Sentinel2026!` | Document ingestion, graph queries, stylometry & blockchain analysis |
+| **Auditor** | `audit` | `Auditor@Sentinel2026!` | Read-only ledger inspection, Section 65B hash chain verification |
 
-✓ Test 01 Passed: All 6 Modules Operational (API Health Status 200 OK)
-✓ Test 02 Passed: Ingestion & Cryptographic Artifact Extraction Verified
-✓ Test 03 Passed: Stylometry & Timezone Alignment Verified (UTC+05:30 overlap: 0.833)
-✓ Test 04 Passed: Knowledge Graph Evidentiary Path Solved (6 hops to cash-out exit)
-✓ Test 05 Passed: Multi-Signal C_total Attribution Math Verified (100.0%)
-✓ Test 06 Passed: Merkle Audit Tamper Injection & Real-Time Detection Verified
-✓ Test 07 Passed: Forensic Court PDF Dossier Generated (Valid %PDF header)
+*One-click quick login buttons are available directly on the login screen.*
 
-=================================================================
-   ALL 7 TESTS PASSED SUCCESSFULLY! (100% REHEARSAL READY)
-=================================================================
-```
+---
 
-To run the automated suite at any time:
+## 6. Complete 27 Production API Endpoints Reference
+
+### Authentication & User Management
+- `POST /api/auth/login` — Authenticate and obtain signed JWT bearer token.
+- `POST /api/auth/register` — Provision a new operator account (`soc_lead` only).
+- `GET /api/auth/me` — Retrieve authenticated user profile, permissions, and active role.
+- `POST /api/auth/change-password` — Secure credential update with passlib bcrypt verification.
+
+### Intelligence Ingestion & Tor Scraper
+- `POST /api/ingest/document` — Asynchronous ingestion of raw forum dumps, ransom notes, and paste sites.
+- `POST /api/ingest/url` — Trigger Tor crawler via Stem SOCKS5 proxy with circuit rotation.
+- `POST /api/ingest/crawl` — Execute targeted multi-depth onion crawler task.
+
+### Stylometry & Linguistic Forensics (Module C)
+- `POST /api/stylometry/analyze` — Extract 384D SBERT embeddings, Jensen-Shannon divergence, and diurnal timestamps.
+- `POST /api/stylometry/compare` — Comparative pairwise analysis between dark web text and clearnet anchor posts.
+- `GET /api/stylometry/profiles` — Retrieve list of all extracted author behavioral profiles.
+- `GET /api/stylometry/profile/{handle}` — Detailed stylometric profile for a specific pseudonym.
+- `GET /api/stylometry/anomalies/{doc_id}` — Multi-operator anomaly detection (bimodal posting & machine translation).
+- `POST /api/stylometry/cluster` — SBERT DBSCAN clustering of uncredited darknet leaks.
+
+### Blockchain Multi-Hop & UTXO Forensics (Module D)
+- `POST /api/blockchain/trace/{address}` — Execute multi-hop UTXO tracing with automatic peel-chain detection.
+- `POST /api/blockchain/cluster` — Multi-input heuristics and co-spending address clustering.
+- `POST /api/blockchain/peel-chain` — Identify automated change address peel-chains across N-hops.
+- `GET /api/blockchain/risk/{address}` — Calculate risk score based on proximity to sanctioned wallets and mixers.
+- `GET /api/blockchain/taint/{address}` — Calculate percentage taint from Wasabi, ChipMixer, or Tornado Cash.
+- `POST /api/blockchain/tag` — Submit attribution tag (e.g., Binance Deposit, Wasabi Output).
+- `GET /api/blockchain/tags/{address}` — Retrieve OSINT and proprietary attribution tags for an address.
+
+### Case Management & Hypothesis Engine
+- `GET /api/cases` — List active investigations with filtering and search.
+- `POST /api/cases` — Open a new de-anonymization investigation (`senior_analyst`, `soc_lead`).
+- `GET /api/cases/{case_id}` — Full case dossier details, targets, hypotheses, and evidence counts.
+- `POST /api/cases/{case_id}/hypotheses` — Add attribution hypothesis with real-time confidence recalculation.
+- `PATCH /api/cases/{case_id}/status` — Transition status (`open` -> `pending_review` -> `escalated` -> `closed`).
+
+### Court-Admissible Dossier Engine (Module F / §65B)
+- `GET /api/cases/{case_id}/dossier/pdf` — Generate and stream court-admissible 6-page ReportLab PDF.
+- `GET /api/cases/{case_id}/dossier/status` — Retrieve cryptographic root hash and compilation timestamp.
+
+### Real-Time WebSockets
+- `WS /ws/cases/{case_id}` — Real-time event streaming for active case collaboration.
+- `WS /ws/alerts` — Global high-priority alert broadcast channel.
+
+---
+
+## 7. Fictional Threat Actor Targets (Pre-Seeded)
+
+### Target 1: `PHANTOM-KRYPT` (Case #1)
+- **Classification**: TOP SECRET // NTRO // COMINT
+- **Dark Web Aliases**: `phantom_krypt`, `krypt_sec`
+- **Clearnet Anchor**: Vikramaditya Sharma (`vsharma_dev`), Senior Backend Engineer, Bengaluru/Indore.
+- **Correlated Artifacts**:
+  - PGP Fingerprint: `4A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E3F4A5B`
+  - Bitcoin Ransomware Wallet: `bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq` (Peel chain traced to Binance deposit cluster)
+  - GitHub clearnet dotfiles repository exposing matching SSH key and commit timezone `UTC+05:30`.
+- **Overall Confidence Score ($C_{total}$)**: `0.912` (HIGH CONFIDENCE ATTRIBUTION)
+
+### Target 2: `VOID-LOCKER` (Case #2)
+- **Classification**: SECRET // NTRO // CRIME-INT
+- **Dark Web Aliases**: `voidsec`, `void_extortion`
+- **Clearnet Anchor**: Rohit Mehta, Network Consultant, Pune/Mumbai.
+- **Correlated Artifacts**:
+  - Ethereum Extortion Address: `0x5aAeb6053F3E94C9b9A09f33669435E7Ef1bEAeD` (Traced through Tornado Cash mixer with 62% taint)
+  - Dark Web Forum Handle registered with ProtonMail alias linking to clearnet LinkedIn profile.
+- **Overall Confidence Score ($C_{total}$)**: `0.760` (MODERATE-HIGH ATTRIBUTION)
+
+---
+
+## 8. Forensic Admissibility (Indian Evidence Act §65B)
+
+The 6-page generated dossier complies with legal requirements for admissibility in Indian Courts:
+1. **Section 65B(4) Certificate**: Embedded on Page 1 with digital hash verification statement, device identifiers, and operating officer credentials.
+2. **Dual-Hash Blockchain Ledger**: Every evidence ingestion creates a block where:
+   $$\text{Block Hash} = \text{SHA256}(\text{Block ID} + \text{Timestamp} + \text{Payload Hash} + \text{Previous Hash})$$
+3. **Tamper Detection**: An interactive simulation tool on the `/audit` page demonstrates that altering a single character in raw evidence immediately invalidates the entire downstream cryptographic chain.
+
+---
+
+## 9. Testing & Quality Assurance
+
+Run the comprehensive automated test suite:
 ```bash
-cd backend
-python tests/test_e2e_demo_flow.py
+# Backend unit & integration tests
+docker compose exec backend pytest -v
+
+# Frontend production build validation
+cd frontend && npm run build
 ```
 
 ---
 
-## 🔗 Key API Endpoints (OpenAPI / Swagger)
+## 10. Security & Ethical Safeguards
 
-| Method | Endpoint | Description |
-|:---:|---|---|
-| `GET` | `/api/health` | Diagnostic status across all 6 submodules |
-| `POST` | `/api/ingest/document` | Module A+B: Raw document ingestion, SHA-256 anchoring & auto-extraction |
-| `GET` | `/api/cases` | Module F: Active case portfolio retrieval |
-| `POST` | `/api/cases/{id}/hypotheses` | Module D: Calculate multi-signal $C_{total}$ confidence breakdown |
-| `POST` | `/api/stylometry/compare` | Module C: Compute $S_{style}$ and Jensen-Shannon divergence between authors |
-| `GET` | `/api/graph` | Module E: Fetch Cytoscape-formatted graph topology (22 nodes, 23 edges) |
-| `GET` | `/api/graph/path?src=...&dst=...` | Module E: Compute shortest path to cash-out exchange |
-| `GET` | `/api/graph/centrality` | Module E: Identify betweenness centrality broker nodes |
-| `GET` | `/api/audit/verify` | Module F: Cryptographically verify Merkle hash chain |
-| `GET` | `/api/cases/{id}/dossier/pdf` | Module F: Generate and download court-admissible forensic PDF dossier |
-
-Interactive Swagger documentation available at: **`http://localhost:8000/docs`**
+- **Synthetic Data**: All PII, dark web handles, onion URLs, and crypto addresses in this repository are 100% synthetically generated for national competition evaluation (SIH26151).
+- **Zero Real Darknet Requests**: Tor scraper modules default to mocked network envelopes unless live Tor circuits are explicitly enabled by authenticated SOC leads.
+- **Immutable Auditability**: No database records can be modified without generating a corresponding tamper-evident audit record.
 
 ---
-
-## ⚖️ Responsible Framing & Ethical Boundaries
-
-Per **PRD Sections 6.3 & 7.0**, SENTINEL-X strictly adheres to ethical intelligence guidelines:
-1. **100% Fictional Demo Corpus:** All seeded threat actors (`DarkViper`, `vk_devtools`), bitcoin addresses, and forum posts are entirely synthetic. No real dark web contraband, live ransomware data, or private citizen PII is stored.
-2. **Defensive & Forensic Scope:** The platform is engineered exclusively for forensic analysis, attribution, and post-incident investigation. It contains no offensive payload delivery or active network disruption tooling.
-3. **CAPTCHA & Legal Compliance:** Automated CAPTCHA bypass is intentionally omitted to maintain legal chain-of-custody. Anti-bot challenges are routed to an **Assisted-Browsing Queue** for human-in-the-loop analyst resolution.
-
----
-
-## 🔒 Intellectual Property & Proprietary License
-
-**Copyright © 2026 Nikhil Kumar Bheda (`bhedanikhilkumar-code`). All Rights Reserved.**
-
-This repository and all its constituent files, codebases, mathematical formulations, graph correlation models, UI designs, and architectures are **STRICTLY PROPRIETARY AND CONFIDENTIAL**.
-
-- 🚫 **No Unauthorized Copying:** Duplicating, cloning, scraping, redistributing, or mirroring this codebase (in whole or in part) without explicit prior written authorization is strictly prohibited.
-- 🚫 **No Derivative Works:** Modifying, decompiling, reverse-engineering, or creating derivative products based on this architecture is prohibited.
-- 🚫 **No AI / LLM Training:** Using any content from this repository to train or evaluate machine learning or generative AI models is forbidden.
-- ⚖️ **Evaluation Notice:** Authorized exclusively for evaluation by the official **Smart India Hackathon (SIH 2026)** jury and **National Technical Research Organisation (NTRO)** evaluators for Problem Statement SIH26151.
-
-For full legal terms, statutory penalties, and copyright protections under the Indian Copyright Act (1957) and international treaties, refer to the [LICENSE](LICENSE) file.
-
----
-
-<div align="center">
-  <sub>Engineered with precision for <b>Smart India Hackathon 2026</b> & <b>National Technical Research Organisation (NTRO)</b></sub><br>
-  <sub>Project Lead & Developer: <b>Nikhil Kumar Bheda</b> (<code>bhedanikhilkumar-code</code>)</sub>
-</div>
+*Developed for the National Technical Research Organisation (NTRO) Smart India Hackathon 2024 (SIH26151).*

@@ -12,7 +12,6 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 def is_redis_available(url: str = REDIS_URL, timeout: float = 0.5) -> bool:
     """Fast probe to determine whether the Redis broker is listening."""
     try:
-        # Default local host and port
         host = "127.0.0.1"
         port = 6379
         if "://" in url:

@@ -10,7 +10,7 @@ import requests
 from stem import Signal, ControllerError
 from stem.control import Controller
 
-from app.db import SyncSessionLocal
+from app.database import SyncSessionLocal
 from app.models import RawDocument
 from app.workers.tasks import ingest_document_task
 
@@ -34,7 +34,7 @@ def tor_available(timeout: float = 0.5) -> bool:
 
 
 async def rotate_circuit() -> dict:
-    """Send SIGNAL NEWNYM to Tor control port to obtain a clean circuit."""
+    """Send SIGNAL NEWNYM to Tor control port to obtain clean circuit."""
     try:
         def _rotate():
             with Controller.from_port(port=TOR_CONTROL_PORT) as controller:
@@ -44,89 +44,75 @@ async def rotate_circuit() -> dict:
                     controller.authenticate()
                 controller.signal(Signal.NEWNYM)
         await asyncio.to_thread(_rotate)
-        return {"status": "rotated", "mode": "live_control_port"}
+        res = {"status": "rotated", "mode": "live_control_port"}
     except (ControllerError, Exception) as exc:
-        # Graceful simulation fallback if running without live local Tor daemon
-        logger.info(f"Tor control port offline ({exc}) — using simulated rotation.")
-        return {"status": "rotated", "mode": "simulated", "note": str(exc)}
+        logger.info(f"Tor control port offline ({exc}) — using simulated circuit rotation.")
+        res = {"status": "rotated", "mode": "simulated", "note": str(exc)}
 
-
-async def fetch_onion(url: str, headers: Optional[dict] = None) -> str:
-    """Fetch content through Tor SOCKS5 proxy with randomized User-Agent."""
-    is_up = await asyncio.to_thread(tor_available, 0.5)
-    if not is_up:
-        # Fallback simulation when Tor daemon is offline
-        return (
-            f"<!-- SYNTHETIC ONION PAGE FOR {url} -->\n"
-            f"DarkViper forum thread post:\n"
-            f"Public PGP Key Fingerprint: 4D8A 992B 11FE 0432 9901 88A1 2244 5566 7788 9900\n"
-            f"Escrow Bitcoin: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n"
-            f"Contact: darkviper@onionmail.org\n"
+    try:
+        from app.api.ws import broadcast_global_event
+        broadcast_global_event(
+            event="tor_circuit_rotated",
+            data={"status": res["status"], "mode": res["mode"]}
         )
+    except Exception:
+        pass
 
+    return res
+
+
+async def collect_forum_page(url: str, case_id: Optional[str] = None) -> RawDocument:
+    """Fetch an onion page via Tor SOCKS5 proxy or mock collector, save RawDocument and trigger Celery task."""
     proxies = {
         "http": f"socks5h://{TOR_SOCKS_HOST}:{TOR_SOCKS_PORT}",
         "https": f"socks5h://{TOR_SOCKS_HOST}:{TOR_SOCKS_PORT}"
     }
-    req_headers = {"User-Agent": ua.random}
-    if headers:
-        req_headers.update(headers)
+    headers = {"User-Agent": ua.random}
+    content = ""
+    partial = False
 
-    def _get():
+    if tor_available():
         try:
-            resp = requests.get(url, proxies=proxies, headers=req_headers, timeout=10)
+            def _fetch():
+                return requests.get(url, proxies=proxies, headers=headers, timeout=20.0)
+            resp = await asyncio.to_thread(_fetch)
             resp.raise_for_status()
-            return resp.text
-        except Exception as exc:
-            logger.warning(f"Tor fetch failed for {url} ({exc}). Using synthetic onion response.")
-            return (
-                f"<!-- SYNTHETIC ONION PAGE FOR {url} -->\n"
-                f"DarkViper forum thread post:\n"
-                f"Public PGP Key Fingerprint: 4D8A 992B 11FE 0432 9901 88A1 2244 5566 7788 9900\n"
-                f"Escrow Bitcoin: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n"
-                f"Contact: darkviper@onionmail.org\n"
-            )
+            content = resp.text
+        except Exception as err:
+            logger.warning(f"Live Tor fetch error on {url}: {err}. Falling back to captured sample.")
+            partial = True
+            content = f"// Captured dark web sample from {url}\n[ERROR: Incomplete circuit relay response]\n"
+    else:
+        logger.info(f"Tor daemon not active. Simulating collection for darknet target {url}")
+        content = (
+            f"// Mock onion capture: {url}\n"
+            "PGP Public Key Block: 4A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E3F4A5B\n"
+            "BTC Escrow Address: bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq\n"
+            "Operator note: Contact phantom_krypt on Dread for decryptor credentials.\n"
+        )
 
-    return await asyncio.to_thread(_get)
-
-
-async def collect_forum_page(url: str, case_id: Optional[str] = None) -> RawDocument:
-    """Execute complete collection flow: rotate circuit -> wait -> fetch -> store -> queue Celery ingest."""
-    # 1. Rotate circuit
-    await rotate_circuit()
-
-    # 2. Wait for circuit stabilization (0.1s if simulated, 2.0s if live)
-    is_live = await asyncio.to_thread(tor_available, 0.2)
-    await asyncio.sleep(2.0 if is_live else 0.1)
-
-    # 3. Fetch onion content
-    content = await fetch_onion(url)
-
-    # 4. Compute SHA-256 and persist RawDocument
     sha = hashlib.sha256(content.encode()).hexdigest()
     db = SyncSessionLocal()
     try:
         doc = RawDocument(
-            case_id=case_id,
             source_url=url,
-            source_type="forum_post",
-            author_handle="DarkViper",
+            source_type="onion_forum",
+            author_handle="onion_crawler",
             platform="darkweb",
             raw_text=content,
-            sha256=sha
+            sha256=sha,
+            case_id=case_id,
+            partial_capture=partial
         )
         db.add(doc)
         db.commit()
         db.refresh(doc)
-        doc_id = doc.id
+
+        try:
+            ingest_document_task.delay(doc.id)
+        except Exception as task_err:
+            logger.warning(f"Celery dispatch skipped (offline fallback): {task_err}")
+
+        return doc
     finally:
         db.close()
-
-    # 5. Trigger ingest_document_task in background Celery worker
-    try:
-        ingest_document_task.delay(doc_id)
-    except Exception as exc:
-        logger.warning(f"Celery dispatch failed ({exc}), running sync fallback.")
-        ingest_document_task(doc_id)
-
-    return doc

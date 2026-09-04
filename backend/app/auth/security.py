@@ -15,7 +15,7 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 
 # Configuration from environment
-SECRET_KEY = os.environ.get("SECRET_KEY", "f78a63dc164a2f8d8b9e6729a4e0c35489f65c192d774e14ab958e932efda712")
+SECRET_KEY = os.environ.get("SECRET_KEY", "83f9f958cc517520e979a44ddbb087d353b3bee4b542942cb948ab263984686b")
 ALGORITHM = os.environ.get("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 
@@ -44,7 +44,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
             return pwd_context.verify(plain_password, hashed_password)
     except Exception:
         pass
-    # Support legacy PBKDF2 salt check for demo backward compatibility
+    # Support legacy PBKDF2 check for demo backward compatibility
     import hashlib
     import hmac
     legacy = hashlib.pbkdf2_hmac("sha256", plain_password.encode(), b"sentinelx", 120_000).hex()
