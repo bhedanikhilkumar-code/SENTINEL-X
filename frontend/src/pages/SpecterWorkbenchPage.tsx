@@ -1,0 +1,220 @@
+import React, { useState } from "react";
+import { TARGET_ACTORS, ActorData } from "../lib/threatData";
+import { KnowledgeGraph } from "../components/Specter/KnowledgeGraph";
+import { GeoLeafletMap } from "../components/Specter/GeoLeafletMap";
+import { ActorProfile } from "../components/Specter/ActorProfile";
+import { ForensicEvidenceTabs } from "../components/Specter/ForensicEvidenceTabs";
+import { TorCircuitView } from "../components/Specter/TorCircuitView";
+import { StylometryRadar } from "../components/Specter/StylometryRadar";
+import { TerminalFeed } from "../components/Specter/TerminalFeed";
+import { AttributionTimelineModal } from "../components/Specter/AttributionTimelineModal";
+import { MerkleAuditModal } from "../components/Specter/MerkleAuditModal";
+import { downloadNtroPdfDossier } from "../components/Specter/pdfGenerator";
+import { useStore } from "../store/useStore";
+import {
+  ShieldAlert,
+  Radio,
+  FileText,
+  Globe2,
+  Share2,
+  Layers,
+} from "lucide-react";
+
+export function SpecterWorkbenchPage() {
+  const store = useStore();
+  const [selectedActorId, setSelectedActorId] = useState<string>("phantom-krypt");
+  const [centerTab, setCenterTab] = useState<"graph" | "map">("graph");
+  const [isTimelineOpen, setIsTimelineOpen] = useState<boolean>(false);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
+
+  const currentActor: ActorData = TARGET_ACTORS[selectedActorId] || TARGET_ACTORS["phantom-krypt"];
+  const caseId = selectedActorId === "void-locker" ? "2" : "1";
+
+  // CHECK 12: Case switch updates store & active actor
+  const handleSelectActor = (actorId: string) => {
+    setSelectedActorId(actorId);
+    store.setSelectedCaseId(actorId === "void-locker" ? "case-void-locker-02" : "case-phantom-krypt-01");
+    store.setActiveCaseId(actorId === "void-locker" ? "case-void-locker-02" : "case-phantom-krypt-01");
+  };
+
+  // CHECK 10: Top right Legal Dossier button
+  const handleTriggerPdf = () => {
+    downloadNtroPdfDossier(currentActor, "Analyst: Priya Patel");
+  };
+
+  return (
+    <div className="h-full w-full bg-[#070a13] text-slate-200 flex flex-col justify-between font-sans selection:bg-cyan-500 selection:text-black overflow-hidden">
+      {/* ========================================================================= */}
+      {/* TOP HEADER: DEFENSE INTELLIGENCE APPARATUS */}
+      {/* ========================================================================= */}
+      <header className="px-5 py-2.5 bg-[#0b1220]/95 backdrop-blur-xl border-b border-[rgba(0,240,255,0.18)] flex items-center justify-between shadow-cyber-glow shrink-0 z-20">
+        {/* Brand & Sponsoring Agency */}
+        <div className="flex items-center space-x-3.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/30 border border-cyan-400/60 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.3)]">
+            <ShieldAlert className="w-5 h-5 text-cyan-400 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2 font-mono">
+              <span className="font-black text-base tracking-widest text-slate-100 uppercase">
+                SPECTER<span className="text-cyan-400">-TRACE</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-red-950/90 text-red-400 border border-red-800 font-bold uppercase tracking-wider">
+                RESTRICTED // NTRO
+              </span>
+            </div>
+            <div className="text-[11px] font-mono text-slate-400 flex items-center space-x-2">
+              <span className="text-cyan-400 font-bold">SIH26151</span>
+              <span>•</span>
+              <span className="text-slate-300">National Cyber Threat Actor Attribution Workbench</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Target Badge & Live Threat Status */}
+        <div className="hidden md:flex items-center space-x-4 px-4 py-1.5 rounded-xl bg-[#0e172a]/90 border border-slate-800 font-mono text-xs">
+          <div className="flex items-center space-x-2">
+            <span className="text-slate-400">ACTIVE TARGET:</span>
+            <span className="text-cyan-300 font-black tracking-wider">
+              {currentActor.codename}
+            </span>
+          </div>
+          <span className="text-slate-700">|</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span className="text-emerald-400 font-bold">STATUS: {currentActor.status}</span>
+          </div>
+          <span className="text-slate-700">|</span>
+          <div className="flex items-center space-x-1.5 text-slate-300">
+            <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            <span>SOCKS5 Circuit: <b className="text-cyan-400">ACTIVE</b></span>
+          </div>
+        </div>
+
+        {/* Quick Actions (CHECK 9 Audit Chain + CHECK 10 Legal Dossier) */}
+        <div className="flex items-center space-x-2 font-mono text-xs">
+          <button
+            onClick={() => setIsAuditModalOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center space-x-1.5 transition"
+            title="Inspect Merkle Audit Chain"
+          >
+            <Layers className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">Audit Chain</span>
+          </button>
+
+          <button
+            onClick={handleTriggerPdf}
+            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-slate-950 font-black uppercase tracking-wider transition shadow-emerald-glow flex items-center space-x-1.5"
+            title="Generate and download Section 65B PDF Dossier"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Legal Dossier</span>
+          </button>
+        </div>
+      </header>
+
+      {/* ========================================================================= */}
+      {/* 4-ZONE MAIN WORKBENCH GRID */}
+      {/* ========================================================================= */}
+      <main className="flex-1 min-h-0 p-3.5 grid grid-cols-1 lg:grid-cols-12 gap-3.5 overflow-y-auto">
+        {/* ZONE 1: SUSPECT DOSSIER & PROFILE (3 Cols) */}
+        <section className="lg:col-span-3 h-full min-h-[580px]">
+          <ActorProfile
+            actor={currentActor}
+            onSelectActor={handleSelectActor}
+            onOpenTimelineModal={() => setIsTimelineOpen(true)}
+          />
+        </section>
+
+        {/* CENTER COLUMN: ZONE 2 (GRAPH/MAP) + TOR CIRCUIT + STYLOMETRY (6 Cols) */}
+        <section className="lg:col-span-6 flex flex-col space-y-3 h-full min-h-[580px]">
+          {/* View Switcher: Leaflet Map vs Cytoscape Graph (CHECK 4) */}
+          <div className="flex items-center justify-between bg-[#0b0f19] px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-xs">
+            <div className="flex items-center space-x-2">
+              <span className="text-slate-400 text-[11px] font-bold">INTELLIGENCE VIEW:</span>
+              <div className="flex items-center space-x-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+                <button
+                  onClick={() => setCenterTab("graph")}
+                  className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center space-x-1.5 transition ${
+                    centerTab === "graph"
+                      ? "bg-cyan-950 text-cyan-400 border border-cyan-700 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Knowledge Graph (Module E)</span>
+                </button>
+                <button
+                  onClick={() => setCenterTab("map")}
+                  className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center space-x-1.5 transition ${
+                    centerTab === "map"
+                      ? "bg-cyan-950 text-cyan-400 border border-cyan-700 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Globe2 className="w-3.5 h-3.5" />
+                  <span>Leaflet 2D Geo Map</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="text-[10px] text-slate-400 font-mono hidden sm:block">
+              Target: <b className="text-cyan-400">{currentActor.codename}</b>
+            </div>
+          </div>
+
+          {/* ZONE 2: RENDER CYTOSCAPE GRAPH OR LEAFLET MAP (CHECK 1, 2, 3, 4) */}
+          <div className="flex-1 min-h-[360px]">
+            {centerTab === "graph" ? (
+              <KnowledgeGraph actorId={currentActor.id} caseId={caseId} />
+            ) : (
+              <GeoLeafletMap actorId={currentActor.id} />
+            )}
+          </div>
+
+          {/* TOR CIRCUIT TOPOLOGY PIPELINE (CHECK 8) */}
+          <div className="shrink-0">
+            <TorCircuitView latency="24ms" circuitId="#7A3F" hops={3} />
+          </div>
+
+          {/* ZONE 4: AI STYLOMETRY & AUTHORSHIP RADAR */}
+          <div className="h-64 shrink-0">
+            <StylometryRadar actor={currentActor} />
+          </div>
+        </section>
+
+        {/* ZONE 3: DIGITAL FORENSIC EVIDENCE LOCKER (3 Cols) (CHECK 5, 6, 7) */}
+        <section className="lg:col-span-3 h-full min-h-[580px]">
+          <ForensicEvidenceTabs
+            actor={currentActor}
+            caseId={caseId}
+            onOpenAuditChain={() => setIsAuditModalOpen(true)}
+          />
+        </section>
+      </main>
+
+      {/* ========================================================================= */}
+      {/* BOTTOM BAR: LIVE NTRO CORRELATION TERMINAL STREAM (CHECK 11) */}
+      {/* ========================================================================= */}
+      <footer className="shrink-0 z-20">
+        <TerminalFeed actorCodename={currentActor.codename} caseId={caseId} />
+      </footer>
+
+      {/* ========================================================================= */}
+      {/* MODALS */}
+      {/* ========================================================================= */}
+      <AttributionTimelineModal
+        isOpen={isTimelineOpen}
+        onClose={() => setIsTimelineOpen(false)}
+        targetCodename={currentActor.codename}
+      />
+
+      <MerkleAuditModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+        caseId={caseId}
+      />
+    </div>
+  );
+}
+
+export default SpecterWorkbenchPage;

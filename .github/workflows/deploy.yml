@@ -27,7 +27,7 @@ jobs:
         working-directory: ./frontend
         run: npm install
 
-      - name: Build Next.js Static Export
+      - name: Build Frontend Production Bundle
         working-directory: ./frontend
         run: npm run build
 
@@ -37,5 +37,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: sentinel-tor
-          directory: frontend/out
+          directory: frontend/dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}

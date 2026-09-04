@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-export const API_BASE = import.meta.env.VITE_API_URL || '';
-export const WS_BASE = import.meta.env.VITE_WS_URL || (window.location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + window.location.host;
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
 
 export const api = axios.create({
   baseURL: API_BASE,
@@ -12,7 +12,7 @@ export const api = axios.create({
 
 // Automatically inject JWT Bearer Token if available in localStorage
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('sentinel_token');
+  const token = localStorage.getItem('token') || localStorage.getItem('sentinel_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

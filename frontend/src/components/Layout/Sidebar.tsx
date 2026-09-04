@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   FolderGit2,
@@ -9,7 +10,6 @@ import {
   MapPin,
   Lock,
   Clock,
-  ExternalLink,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
@@ -20,21 +20,29 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
   const store = useStore();
-  const { user } = store;
-  const currentView = props.currentView || store.currentView;
-  const onViewChange = props.onViewChange || store.setCurrentView;
+  const location = useLocation();
+  const navigate = useNavigate();
 
+  // CHECK 13: Sidebar navigation links mapped to real react-router-dom routes
   const navigationItems = [
-    { id: 'dashboard', label: 'SOC Dashboard', icon: LayoutDashboard },
-    { id: 'cases', label: 'Investigation Cases', icon: FolderGit2 },
-    { id: 'graph', label: 'Knowledge Graph (Mod E)', icon: Share2 },
-    { id: 'stylometry', label: 'Stylometry Radar (Mod C)', icon: Activity },
-    { id: 'blockchain', label: 'Crypto & Mixers (Mod D)', icon: Coins },
-    { id: 'map', label: 'Geo-Attribution Map', icon: MapPin },
-    { id: 'timeline', label: 'Attribution Timeline', icon: Clock },
-    { id: 'audit', label: 'Audit Hash Chain (Mod F)', icon: Lock },
-    { id: 'dossier', label: 'Dossier PDF Export', icon: FileText },
+    { path: '/dashboard', id: 'dashboard', label: 'SOC Dashboard', icon: LayoutDashboard },
+    { path: '/cases', id: 'cases', label: 'Investigation Cases', icon: FolderGit2 },
+    { path: '/graph', id: 'graph', label: 'Knowledge Graph (Mod E)', icon: Share2 },
+    { path: '/stylometry', id: 'stylometry', label: 'Stylometry Radar (Mod C)', icon: Activity },
+    { path: '/crypto', id: 'crypto', label: 'Crypto & Mixers (Mod D)', icon: Coins },
+    { path: '/map', id: 'map', label: 'Geo-Attribution Map', icon: MapPin },
+    { path: '/timeline', id: 'timeline', label: 'Attribution Timeline', icon: Clock },
+    { path: '/audit', id: 'audit', label: 'Audit Hash Chain (Mod F)', icon: Lock },
+    { path: '/dossier', id: 'dossier', label: 'Dossier PDF Export', icon: FileText },
   ];
+
+  const handleNavigate = (path: string, id: string) => {
+    if (props.onViewChange) {
+      props.onViewChange(id);
+    }
+    store.setCurrentView(id);
+    navigate(path);
+  };
 
   return (
     <aside className="w-64 bg-[#111827] border-r border-cyber-border flex flex-col justify-between shrink-0 select-none">
@@ -46,15 +54,20 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
         <nav className="space-y-1 px-3">
           {navigationItems.map((item) => {
             const Icon = item.icon;
-            const active = currentView === item.id;
+            const active =
+              location.pathname === item.path ||
+              (item.path === '/graph' && (location.pathname === '/' || location.pathname === '')) ||
+              (item.path === '/crypto' && location.pathname === '/blockchain') ||
+              props.currentView === item.id;
+
             return (
               <button
-                key={item.id}
-                onClick={() => onViewChange(item.id)}
-                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-md text-xs font-mono transition-all ${
+                key={item.path}
+                onClick={() => handleNavigate(item.path, item.id)}
+                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-r-md text-xs font-mono transition-all cursor-pointer border-l-4 ${
                   active
-                    ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/40 shadow-glow-cyan'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    ? 'border-l-4 border-cyan-400 bg-cyan-500/15 text-cyan-300 font-bold shadow-glow-cyan'
+                    : 'border-l-4 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                 }`}
               >
                 <Icon className={`w-4 h-4 ${active ? 'text-cyan-400' : 'text-slate-400'}`} />
@@ -79,3 +92,6 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
     </aside>
   );
 };
+
+export default Sidebar;
+

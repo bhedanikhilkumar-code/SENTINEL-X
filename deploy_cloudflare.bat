@@ -9,18 +9,23 @@ echo.
 
 cd /d "%~dp0frontend"
 
-echo [1/2] Building Next.js production static export...
+echo [1/2] Building frontend production static bundle...
 call npm run build
 if %errorlevel% neq 0 (
     echo.
-    echo [ERROR] Next.js build failed! Aborting deployment.
+    echo [ERROR] Build failed! Aborting deployment.
     pause
     exit /b %errorlevel%
 )
 
+if not exist "dist\_redirects" (
+    echo /*    /index.html   200 > "dist\_redirects"
+)
+
 echo.
 echo [2/2] Deploying static bundle to Cloudflare Pages (sentinel-tor)...
-call npx -y wrangler pages deploy out --project-name=sentinel-tor --commit-dirty=true
+cd /d "%~dp0"
+call npx -y wrangler pages deploy frontend/dist --project-name=sentinel-tor --branch=master --commit-dirty=true
 
 if %errorlevel% equ 0 (
     echo.

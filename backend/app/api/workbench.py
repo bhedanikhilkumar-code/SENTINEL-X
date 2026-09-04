@@ -109,7 +109,8 @@ def compare_documents(body: CompareBody, db: Session = Depends(get_db)):
 
 
 @router.get("/audit")
-def get_audit_log(db: Session = Depends(get_db)):
+@router.get("/workbench/audit/{case_id}")
+def get_audit_log(case_id: str = None, db: Session = Depends(get_db)):
     from app.models import AuditEntry
     entries = db.query(AuditEntry).order_by(AuditEntry.seq).all()
     return [{"seq": e.seq, "actor": e.actor, "action": e.action, "entity_ids": e.entity_ids,
@@ -118,7 +119,8 @@ def get_audit_log(db: Session = Depends(get_db)):
 
 
 @router.get("/audit/verify")
-def verify_audit_chain(db: Session = Depends(get_db)):
+@router.get("/workbench/audit/{case_id}/verify")
+def verify_audit_chain(case_id: str = None, db: Session = Depends(get_db)):
     return verify_chain(db)
 
 
