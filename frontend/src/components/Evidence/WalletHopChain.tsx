@@ -41,12 +41,51 @@ export const WalletHopChain: React.FC = () => {
     },
   ];
 
+  const [hops, setHops] = useState(mockHops);
+  const [riskAssessment, setRiskAssessment] = useState<any>(null);
+
   const handleTrace = async () => {
     setLoading(true);
     try {
-      await api.get(`/api/blockchain/trace/${address}`);
-    } catch {
-      // Offline fallback
+      const res = await api.get(`/api/blockchain/trace/${address}`);
+      const data = res.data;
+      if (data) {
+        if (data.risk_assessment) {
+          setRiskAssessment(data.risk_assessment);
+        }
+        if (data.nodes && data.nodes.length > 0) {
+          const mappedHops = data.nodes
+            .filter((n: any) => n.data?.address || n.data?.type === 'transaction')
+            .slice(0, 4)
+            .map((n: any, idx: number) => {
+              const d = n.data;
+              const isTx = d.type === 'transaction';
+              const isMixer = d.type === 'mixer_pool' || d.is_coinjoin;
+              const isExchange = d.type === 'exchange_deposit';
+              const isDarknet = d.type === 'darknet_wallet';
+
+              let color = 'border-cyan-500 bg-cyan-500/10 text-cyan-400';
+              if (isDarknet) color = 'border-red-500 bg-red-500/10 text-red-400';
+              else if (isMixer) color = 'border-purple-500 bg-purple-500/10 text-purple-400';
+              else if (isExchange) color = 'border-emerald-500 bg-emerald-500/10 text-emerald-400';
+              else if (isTx) color = 'border-amber-500 bg-amber-500/10 text-amber-400';
+
+              return {
+                hop: idx + 1,
+                type: d.label || (isTx ? 'On-Chain Transaction' : 'UTXO Address'),
+                address: d.address || d.id,
+                amount: d.amount ? `${d.amount} BTC` : (d.fee ? `Fee: ${d.fee} BTC` : 'UTXO Hop'),
+                risk: d.risk ? `RISK (${d.risk})` : (isMixer ? 'MIXER TAINT' : isExchange ? 'KYC ANCHOR' : 'VERIFIED'),
+                color,
+              };
+            });
+          if (mappedHops.length > 0) {
+            setHops(mappedHops);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Using fallback trace hops:", err);
     } finally {
       setLoading(false);
     }
@@ -74,7 +113,7 @@ export const WalletHopChain: React.FC = () => {
           <button
             onClick={handleTrace}
             disabled={loading}
-            className="px-3 py-1 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-xs shadow-glow-cyan transition-colors flex items-center space-x-1"
+            className="px-3 py-1 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-xs shadow-glow-cyan transition-colors flex items-center space-x-1 cursor-pointer"
           >
             <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
             <span>Trace Hops</span>
@@ -82,8 +121,28 @@ export const WalletHopChain: React.FC = () => {
         </div>
       </div>
 
+      {riskAssessment && (
+        <div className="mb-4 p-2.5 rounded bg-black/40 border border-cyber-border flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+          <div className="flex items-center space-x-2">
+            <span className="text-slate-400">Target Risk Level:</span>
+            <span className={`font-bold px-2 py-0.5 rounded ${riskAssessment.risk_level === 'HIGH' ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'}`}>
+              {riskAssessment.risk_level} ({riskAssessment.risk_score})
+            </span>
+          </div>
+          {riskAssessment.tags && (
+            <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+              {riskAssessment.tags.map((t: string, i: number) => (
+                <span key={i} className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-300">
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        {mockHops.map((h, idx) => (
+        {hops.map((h, idx) => (
           <div key={idx} className="relative">
             <div className={`p-3.5 rounded-lg border ${h.color} flex flex-col justify-between h-full`}>
               <div>

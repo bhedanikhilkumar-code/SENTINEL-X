@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ActorData } from "../../lib/threatData";
 import { downloadPdfDossier } from "../../lib/api";
+import { getBackendUrl } from "../../config/api";
 import {
   Key,
   Coins,
@@ -46,8 +47,8 @@ export function ForensicEvidenceTabs({
   // CHECK 7: Real PDF generation and download
   const handleGeneratePdf = async () => {
     setDownloadingPdf(true);
+    const resolvedCaseId = actor.id === "void-locker" ? "2" : caseId || "1";
     try {
-      const resolvedCaseId = actor.id === "void-locker" ? "2" : caseId || "1";
       await downloadPdfDossier(
         resolvedCaseId,
         `SENTINEL-X_${actor.codename}_NTRO_LEGAL_DOSSIER.pdf`
@@ -58,7 +59,8 @@ export function ForensicEvidenceTabs({
         const token = localStorage.getItem("token") || localStorage.getItem("sentinel_token");
         const headers: Record<string, string> = {};
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch(`http://localhost:8000/api/cases/1/dossier/pdf`, { headers });
+        const activeBase = getBackendUrl();
+        const res = await fetch(`${activeBase}/api/cases/${resolvedCaseId}/dossier/pdf`, { headers });
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");

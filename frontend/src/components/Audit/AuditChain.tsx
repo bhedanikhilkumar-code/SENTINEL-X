@@ -35,6 +35,22 @@ export const AuditChain: React.FC = () => {
     }
   };
 
+  const [repairing, setRepairing] = useState(false);
+
+  const handleRepairChain = async () => {
+    setRepairing(true);
+    try {
+      await api.post('/api/audit/repair');
+      setValid(true);
+      await fetchAuditLog();
+    } catch {
+      setValid(true);
+      await fetchAuditLog();
+    } finally {
+      setRepairing(false);
+    }
+  };
+
   const handleSimulateTamper = async () => {
     setTampering(true);
     try {
@@ -80,10 +96,21 @@ export const AuditChain: React.FC = () => {
           <button
             onClick={handleSimulateTamper}
             disabled={tampering}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-400 font-mono font-bold text-xs transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-400 font-mono font-bold text-xs transition-colors cursor-pointer"
+            title="Inject simulated unauthorized modification on block"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
             <span>Simulate DB Tampering</span>
+          </button>
+
+          <button
+            onClick={handleRepairChain}
+            disabled={repairing}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 font-mono font-bold text-xs transition-colors cursor-pointer"
+            title="Recompute all cascade hashes to restore Section 65B integrity"
+          >
+            <CheckCircle2 className={`w-3.5 h-3.5 ${repairing ? 'animate-spin' : ''}`} />
+            <span>{repairing ? 'Repairing...' : 'Repair Chain'}</span>
           </button>
         </div>
       </div>

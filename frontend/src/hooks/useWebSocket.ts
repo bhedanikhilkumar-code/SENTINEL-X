@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { WS_BASE } from '../config/api';
+import { getWsUrl } from '../config/api';
 
 export function useWebSocket(caseId?: string | null) {
   const wsRef = useRef<WebSocket | null>(null);
   const addAlert = useStore((state) => state.addAlert);
 
   useEffect(() => {
-    const url = caseId ? `${WS_BASE}/ws/cases/${caseId}` : `${WS_BASE}/ws/alerts`;
+    const wsBase = getWsUrl();
+    const url = caseId ? `${wsBase}/ws/cases/${caseId}` : `${wsBase}/ws/alerts`;
     let socket: WebSocket;
     let retryTimeout: NodeJS.Timeout;
 

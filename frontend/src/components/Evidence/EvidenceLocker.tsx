@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Archive, Search, Filter } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Archive, Search, Filter, Loader2 } from 'lucide-react';
 import { ArtifactCard } from './ArtifactCard';
+import { api } from '../../config/api';
 
 interface EvidenceLockerProps {
   artifacts?: Array<{
@@ -12,18 +13,53 @@ interface EvidenceLockerProps {
   }>;
 }
 
+const DEFAULT_ARTIFACTS = [
+  { id: 'art-1', type: 'pgp_key', value: '4A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E3F4A5B', confidence: 0.95, doc_hash: '3a1f4b...' },
+  { id: 'art-2', type: 'btc_address', value: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq', confidence: 0.90, doc_hash: '7b2e9c...' },
+  { id: 'art-3', type: 'ssh_key', value: 'SHA256:4t7XmK9pL2vNqW8zR1yB6uE5iO0sA3dF7gH', confidence: 0.88, doc_hash: '9f0a2d...' },
+  { id: 'art-4', type: 'email', value: 'vsharma.dev@protonmail.com', confidence: 0.92, doc_hash: '4d8c1e...' },
+];
+
 export const EvidenceLocker: React.FC<EvidenceLockerProps> = ({
-  artifacts = [
-    { id: 'art-1', type: 'pgp_key', value: '4A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E3F4A5B', confidence: 0.95, doc_hash: '3a1f4b...' },
-    { id: 'art-2', type: 'btc_address', value: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq', confidence: 0.90, doc_hash: '7b2e9c...' },
-    { id: 'art-3', type: 'ssh_key', value: 'SHA256:4t7XmK9pL2vNqW8zR1yB6uE5iO0sA3dF7gH', confidence: 0.88, doc_hash: '9f0a2d...' },
-    { id: 'art-4', type: 'email', value: 'vsharma.dev@protonmail.com', confidence: 0.92, doc_hash: '4d8c1e...' },
-  ],
+  artifacts,
 }) => {
+  const [items, setItems] = useState(artifacts && artifacts.length > 0 ? artifacts : DEFAULT_ARTIFACTS);
+  const [loading, setLoading] = useState(false);
   const [filterType, setFilterType] = useState('all');
   const [search, setSearch] = useState('');
 
-  const filtered = artifacts.filter((a) => {
+  useEffect(() => {
+    if (artifacts && artifacts.length > 0) {
+      setItems(artifacts);
+      return;
+    }
+    let active = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await api.get('/api/cases/1');
+        if (active && res.data?.artifacts && res.data.artifacts.length > 0) {
+          const mapped = res.data.artifacts.map((a: any) => ({
+            id: a.id,
+            type: a.type || a.artifact_type || 'artifact',
+            value: a.value || a.canonical_value,
+            confidence: a.confidence || a.extraction_confidence || 0.90,
+            doc_hash: a.source_doc_id ? `${a.source_doc_id.slice(0, 8)}...` : undefined,
+          }));
+          setItems(mapped);
+        }
+      } catch {
+        // Fallback remains
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [artifacts]);
+
+  const filtered = items.filter((a) => {
     const matchesType = filterType === 'all' || a.type.includes(filterType);
     const matchesSearch = !search || a.value.toLowerCase().includes(search.toLowerCase());
     return matchesType && matchesSearch;
@@ -38,7 +74,7 @@ export const EvidenceLocker: React.FC<EvidenceLockerProps> = ({
             Digital Evidence Locker (Module B)
           </h3>
           <span className="text-xs font-mono text-cyan-400 font-semibold px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30">
-            {artifacts.length} Extracted Exhibits
+            {loading ? 'Fetching...' : `${items.length} Extracted Exhibits`}
           </span>
         </div>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Terminal, Shield, Play, Pause, RotateCcw } from "lucide-react";
-import { WS_BASE } from "../../lib/api";
+import { getWsUrl } from "../../config/api";
 
 interface TerminalFeedProps {
   actorCodename?: string;
@@ -38,7 +38,7 @@ export function TerminalFeed({
     const connectWebSocket = () => {
       try {
         const resolvedId = actorCodename.includes("VOID") ? "2" : caseId || "1";
-        const wsUrl = `${WS_BASE}/ws/case/${resolvedId}`;
+        const wsUrl = `${getWsUrl()}/ws/case/${resolvedId}`;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {

@@ -117,10 +117,28 @@ export const StyleCompare: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2 text-xs font-mono">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span className="text-emerald-300">
-              High Probability Authorship Concurrence (Identical Author)
-            </span>
+            {(result.s_style ?? 0.835) >= 0.80 ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span className="text-emerald-300 font-bold">
+                  High Probability Authorship Concurrence (Identical Author)
+                </span>
+              </>
+            ) : (result.s_style ?? 0.835) >= 0.50 ? (
+              <>
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span className="text-amber-300 font-bold">
+                  Moderate Stylometric Alignment (Potential Co-Author / Associate)
+                </span>
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="w-4 h-4 text-rose-400" />
+                <span className="text-rose-300 font-bold">
+                  Low Stylometric Correlation (Distinct Authorship)
+                </span>
+              </>
+            )}
           </div>
         </div>
       )}

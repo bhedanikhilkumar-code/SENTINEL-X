@@ -4,6 +4,7 @@
  */
 import { getBackendUrl, getWsUrl } from "../config/api";
 
+export { getBackendUrl, getWsUrl };
 export const API_BASE = getBackendUrl();
 export const WS_BASE = getWsUrl();
 
@@ -164,7 +165,8 @@ export async function downloadPdfDossier(caseId: string = "1", filename?: string
   const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}/api/cases/${caseId}/dossier/pdf`, {
+  const activeBase = getBackendUrl();
+  const res = await fetch(`${activeBase}/api/cases/${caseId}/dossier/pdf`, {
     headers,
   });
   if (!res.ok) {
