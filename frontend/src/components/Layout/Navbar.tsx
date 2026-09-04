@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Radio, UserCheck, LogOut, Bell, X, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Shield, Radio, UserCheck, LogOut, Bell, X, AlertTriangle, CheckCircle, Server, Link2, Loader2, Check } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useStore } from '../../store/useStore';
-import { api } from '../../config/api';
+import { api, getBackendUrl, setBackendUrl } from '../../config/api';
 
 function decodeJwt(token: string) {
   try {
@@ -24,6 +25,10 @@ export const Navbar: React.FC = () => {
   const { user, logout, alerts } = useStore();
   const [torOnline, setTorOnline] = useState(true);
   const [showAlertModal, setShowAlertModal] = useState(false);
+  const [showTunnelModal, setShowTunnelModal] = useState(false);
+  const [backendUrlInput, setBackendUrlInput] = useState(getBackendUrl());
+  const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+  const [testingBackend, setTestingBackend] = useState(false);
 
   // CHECK 19: Decode real user details from JWT token
   const token =
@@ -45,7 +50,7 @@ export const Navbar: React.FC = () => {
     'ANALYST'
   ).toUpperCase();
 
-  // CHECK 17: Poll /api/health every 30 seconds for Tor Collector status
+  // CHECK 17: Poll /api/health every 30 seconds for Tor Collector status and Backend Tunnel health
   useEffect(() => {
     let cancelled = false;
 
@@ -55,20 +60,46 @@ export const Navbar: React.FC = () => {
         if (!cancelled) {
           const modA = res.data?.modules?.A_ingestion;
           setTorOnline(modA === 'up' || res.data?.status === 'ok');
+          setBackendStatus(res.data?.status === 'ok' ? 'online' : 'offline');
         }
       } catch {
-        if (!cancelled) setTorOnline(true); // Resilient fallback
+        if (!cancelled) {
+          setTorOnline(true); // Resilient fallback
+          setBackendStatus('offline');
+        }
       }
     };
 
     checkTorHealth();
-    const interval = setInterval(checkTorHealth, 30000);
+    const interval = setInterval(checkTorHealth, 20000);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
   }, []);
+
+  const handleSaveBackend = async (urlToTest: string) => {
+    setTestingBackend(true);
+    try {
+      const clean = urlToTest.trim().replace(/\/+$/, '');
+      const testRes = await fetch(`${clean}/api/health`);
+      const data = await testRes.json();
+      if (data?.status === 'ok') {
+        setBackendUrl(clean);
+        setBackendUrlInput(clean);
+        setBackendStatus('online');
+        toast.success(`Connected to Backend: ${clean}`);
+        setShowTunnelModal(false);
+      } else {
+        throw new Error('Health check returned non-ok status');
+      }
+    } catch (err: any) {
+      toast.error(`Could not reach backend at: ${urlToTest}. Make sure your tunnel is running!`);
+    } finally {
+      setTestingBackend(false);
+    }
+  };
 
   // CHECK 20: Disconnect session & clear storage
   const handleLogout = () => {
@@ -121,7 +152,20 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* Center Operational Status */}
-      <div className="hidden md:flex items-center space-x-4">
+      <div className="hidden md:flex items-center space-x-3">
+        {/* Backend / Cloudflare Tunnel Connection Badge */}
+        <button
+          onClick={() => setShowTunnelModal(true)}
+          className="flex items-center space-x-2 px-3 py-1 rounded bg-black/40 border border-cyber-border hover:border-cyan-500/50 text-xs font-mono transition cursor-pointer"
+          title="Click to configure Cloudflare Tunnel backend connection"
+        >
+          <Server className={`w-3.5 h-3.5 ${backendStatus === 'online' ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}`} />
+          <span className="text-slate-300 hidden lg:inline">BACKEND:</span>
+          <span className={backendStatus === 'online' ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-semibold'}>
+            {backendStatus === 'online' ? 'LIVE TUNNEL' : 'LINK TUNNEL'}
+          </span>
+        </button>
+
         {/* CHECK 17: Tor Collector Status Badge */}
         <div className="flex items-center space-x-2 px-3 py-1 rounded bg-black/40 border border-cyber-border text-xs font-mono">
           <span className="relative flex h-2 w-2">
@@ -137,7 +181,7 @@ export const Navbar: React.FC = () => {
             ></span>
           </span>
           <span className={torOnline ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold'}>
-            TOR COLLECTOR: {torOnline ? 'ONLINE' : 'DEGRADED'}
+            TOR: {torOnline ? 'ONLINE' : 'DEGRADED'}
           </span>
         </div>
 
@@ -179,6 +223,73 @@ export const Navbar: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Cloudflare Tunnel Modal */}
+      {showTunnelModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0e1626] border border-cyan-500/40 rounded-2xl p-6 max-w-lg w-full font-mono text-xs shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <Link2 className="w-4 h-4 text-cyan-400" />
+                <span className="font-bold text-white uppercase text-sm">Cloudflare Tunnel & Backend Link</span>
+              </div>
+              <button onClick={() => setShowTunnelModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="text-slate-300 text-xs leading-relaxed space-y-2">
+              <p>
+                Connect this live Cloudflare Pages frontend (<b className="text-cyan-400">sentinel-tor.pages.dev</b>) to your local FastAPI backend on port 8000.
+              </p>
+              <div className="p-3 rounded-xl bg-black/50 border border-slate-800 text-[11px] space-y-1">
+                <div className="text-slate-400">⚡ Auto Launcher:</div>
+                <div className="text-cyan-300 font-bold">
+                  Double click `start_cloudflare_tunnel.bat` in the project root.
+                </div>
+                <div className="text-slate-500 text-[10px]">
+                  It automatically starts the tunnel and launches this page connected!
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-400 uppercase">
+                Active Backend URL:
+              </label>
+              <input
+                type="text"
+                value={backendUrlInput}
+                onChange={(e) => setBackendUrlInput(e.target.value)}
+                placeholder="https://xxxx.trycloudflare.com or http://localhost:8000"
+                className="w-full px-3 py-2 rounded-lg bg-black/60 border border-slate-700 text-cyan-300 font-mono text-xs focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <button
+                onClick={() => {
+                  setBackendUrl('');
+                  setBackendUrlInput('http://localhost:8000');
+                  toast.success('Reset to localhost:8000');
+                }}
+                className="px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 font-bold cursor-pointer"
+              >
+                Reset to Localhost
+              </button>
+
+              <button
+                onClick={() => handleSaveBackend(backendUrlInput)}
+                disabled={testingBackend}
+                className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-bold flex items-center space-x-1.5 shadow-glow-cyan cursor-pointer"
+              >
+                {testingBackend ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>{testingBackend ? 'Testing...' : 'Test & Connect'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CHECK 18: Live Alerts Slide-Over Modal */}
       {showAlertModal && (

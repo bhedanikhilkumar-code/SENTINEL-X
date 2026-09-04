@@ -2,8 +2,10 @@
  * SENTINEL-X Backend API Client
  * Connects the SPECTER-TRACE and SENTINEL-X frontend to FastAPI (port 8000).
  */
-export const API_BASE = (import.meta as any).env?.VITE_API_URL || "http://localhost:8000";
-export const WS_BASE = (import.meta as any).env?.VITE_WS_URL || "ws://localhost:8000";
+import { getBackendUrl, getWsUrl } from "../config/api";
+
+export const API_BASE = getBackendUrl();
+export const WS_BASE = getWsUrl();
 
 let authToken: string | null = null;
 
@@ -34,13 +36,14 @@ export function getAuthToken(): string | null {
 }
 
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const activeBase = getBackendUrl();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
   const token = getAuthToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${activeBase}${path}`, { ...options, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || `HTTP ${res.status}`);
