@@ -11,6 +11,9 @@ import { AttributionTimelineModal } from "../components/Specter/AttributionTimel
 import { MerkleAuditModal } from "../components/Specter/MerkleAuditModal";
 import { downloadNtroPdfDossier } from "../components/Specter/pdfGenerator";
 import { useStore } from "../store/useStore";
+import { SpecterAiCopilot } from "../components/AI/SpecterAiCopilot";
+import { DarknetIngestModal } from "../components/Ingest/DarknetIngestModal";
+import { LegalSubpoenaModal } from "../components/Legal/LegalSubpoenaModal";
 import {
   ShieldAlert,
   Radio,
@@ -18,6 +21,9 @@ import {
   Globe2,
   Share2,
   Layers,
+  Sparkles,
+  Scale,
+  UploadCloud,
 } from "lucide-react";
 
 export function SpecterWorkbenchPage() {
@@ -26,6 +32,9 @@ export function SpecterWorkbenchPage() {
   const [centerTab, setCenterTab] = useState<"graph" | "map">("graph");
   const [isTimelineOpen, setIsTimelineOpen] = useState<boolean>(false);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
+  const [isAiCopilotOpen, setIsAiCopilotOpen] = useState<boolean>(false);
+  const [isSubpoenaOpen, setIsSubpoenaOpen] = useState<boolean>(false);
+  const [isIngestOpen, setIsIngestOpen] = useState<boolean>(false);
 
   const currentActor: ActorData = TARGET_ACTORS[selectedActorId] || TARGET_ACTORS["phantom-krypt"];
   const caseId = selectedActorId === "void-locker" ? "2" : "1";
@@ -93,8 +102,36 @@ export function SpecterWorkbenchPage() {
           </div>
         </div>
 
-        {/* Quick Actions (CHECK 9 Audit Chain + CHECK 10 Legal Dossier) */}
+        {/* Quick Actions (AI Copilot + Audit Chain + Subpoena + Legal Dossier) */}
         <div className="flex items-center space-x-1.5 sm:space-x-2 font-mono text-xs shrink-0">
+          <button
+            onClick={() => setIsAiCopilotOpen(true)}
+            className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-600/30 hover:from-cyan-500/30 hover:to-blue-600/40 border border-cyan-400 text-cyan-300 font-bold flex items-center space-x-1 sm:space-x-1.5 transition text-[11px] sm:text-xs cursor-pointer shadow-glow-cyan"
+            title="Open SPECTER-AI Autonomous Copilot"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            <span className="hidden sm:inline">AI Copilot</span>
+            <span className="sm:hidden">AI</span>
+          </button>
+
+          <button
+            onClick={() => setIsIngestOpen(true)}
+            className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 font-bold flex items-center space-x-1 sm:space-x-1.5 transition text-[11px] sm:text-xs cursor-pointer"
+            title="Ingest raw darknet leak dumps"
+          >
+            <UploadCloud className="w-3.5 h-3.5 text-purple-400" />
+            <span className="hidden md:inline">Leak Ingest</span>
+          </button>
+
+          <button
+            onClick={() => setIsSubpoenaOpen(true)}
+            className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-emerald-300 font-bold flex items-center space-x-1 sm:space-x-1.5 transition text-[11px] sm:text-xs cursor-pointer"
+            title="Generate Section 91 CrPC Subpoenas"
+          >
+            <Scale className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden md:inline">Subpoena</span>
+          </button>
+
           <button
             onClick={() => setIsAuditModalOpen(true)}
             className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center space-x-1 sm:space-x-1.5 transition text-[11px] sm:text-xs cursor-pointer"
@@ -218,6 +255,35 @@ export function SpecterWorkbenchPage() {
         isOpen={isAuditModalOpen}
         onClose={() => setIsAuditModalOpen(false)}
         caseId={caseId}
+      />
+
+      <SpecterAiCopilot
+        isOpen={isAiCopilotOpen}
+        onClose={() => setIsAiCopilotOpen(false)}
+        onTriggerAction={(actionId) => {
+          setIsAiCopilotOpen(false);
+          if (actionId === 'open_subpoena' || actionId === 'open_subpoena_exchange') {
+            setIsSubpoenaOpen(true);
+          } else if (actionId === 'view_map') {
+            setCenterTab('map');
+          } else if (actionId === 'export_pdf') {
+            handleTriggerPdf();
+          } else if (actionId === 'view_crypto') {
+            window.location.href = '/crypto';
+          } else if (actionId === 'view_stylometry') {
+            window.location.href = '/stylometry';
+          }
+        }}
+      />
+
+      <DarknetIngestModal
+        isOpen={isIngestOpen}
+        onClose={() => setIsIngestOpen(false)}
+      />
+
+      <LegalSubpoenaModal
+        isOpen={isSubpoenaOpen}
+        onClose={() => setIsSubpoenaOpen(false)}
       />
     </div>
   );

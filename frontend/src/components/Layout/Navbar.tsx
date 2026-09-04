@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Radio, UserCheck, LogOut, Bell, X, AlertTriangle, CheckCircle, Server, Link2, Loader2, Check, Menu, Download } from 'lucide-react';
+import { Shield, Radio, UserCheck, LogOut, Bell, X, AlertTriangle, CheckCircle, Server, Link2, Loader2, Check, Menu, Download, Sparkles, UploadCloud, Scale } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useStore } from '../../store/useStore';
 import { api, getBackendUrl, setBackendUrl } from '../../config/api';
+import { SpecterAiCopilot } from '../AI/SpecterAiCopilot';
+import { DarknetIngestModal } from '../Ingest/DarknetIngestModal';
+import { LegalSubpoenaModal } from '../Legal/LegalSubpoenaModal';
 
 function decodeJwt(token: string) {
   try {
@@ -30,6 +33,9 @@ export const Navbar: React.FC = () => {
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [testingBackend, setTestingBackend] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [showAiCopilot, setShowAiCopilot] = useState(false);
+  const [showIngestModal, setShowIngestModal] = useState(false);
+  const [showSubpoenaModal, setShowSubpoenaModal] = useState(false);
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -225,6 +231,37 @@ export const Navbar: React.FC = () => {
           <span className="text-slate-300 hidden md:inline">LIVE:</span>
           <span className="text-cyan-400 font-semibold">{currentAlerts.length}</span>
         </button>
+
+        {/* SPECTER-AI Copilot Button */}
+        <button
+          onClick={() => setShowAiCopilot(true)}
+          className="flex items-center space-x-1.5 px-2 sm:px-3 py-1 rounded bg-gradient-to-r from-cyan-500/20 to-blue-600/30 border border-cyan-400/80 text-cyan-300 hover:text-white text-[11px] sm:text-xs font-mono font-bold transition shadow-glow-cyan cursor-pointer"
+          title="Open SPECTER-AI Autonomous Copilot"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+          <span className="hidden md:inline">SPECTER-AI</span>
+          <span className="md:hidden">AI</span>
+        </button>
+
+        {/* Darknet Ingestion Extractor */}
+        <button
+          onClick={() => setShowIngestModal(true)}
+          className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded bg-black/40 border border-cyber-border hover:border-purple-500/60 text-slate-300 hover:text-white text-[11px] sm:text-xs font-mono transition cursor-pointer"
+          title="Ingest raw darknet leaks and extract artifacts"
+        >
+          <UploadCloud className="w-3.5 h-3.5 text-purple-400" />
+          <span>LEAK INGEST</span>
+        </button>
+
+        {/* Court Subpoena Generator */}
+        <button
+          onClick={() => setShowSubpoenaModal(true)}
+          className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded bg-black/40 border border-cyber-border hover:border-emerald-500/60 text-slate-300 hover:text-white text-[11px] sm:text-xs font-mono transition cursor-pointer"
+          title="Generate Section 91 CrPC / BSA 2023 Subpoenas"
+        >
+          <Scale className="w-3.5 h-3.5 text-emerald-400" />
+          <span>SUBPOENA</span>
+        </button>
       </div>
 
       {/* User / Authentication Badge (CHECK 19 & CHECK 20) */}
@@ -374,7 +411,7 @@ export const Navbar: React.FC = () => {
             <div className="pt-4 border-t border-slate-800">
               <button
                 onClick={() => setShowAlertModal(false)}
-                className="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold border border-slate-700"
+                className="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold border border-slate-700 cursor-pointer"
               >
                 Close Alerts Panel
               </button>
@@ -382,6 +419,38 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Autonomous AI Copilot Drawer */}
+      <SpecterAiCopilot
+        isOpen={showAiCopilot}
+        onClose={() => setShowAiCopilot(false)}
+        onTriggerAction={(actionId) => {
+          setShowAiCopilot(false);
+          if (actionId === 'open_subpoena' || actionId === 'open_subpoena_exchange') {
+            setShowSubpoenaModal(true);
+          } else if (actionId === 'view_crypto') {
+            window.location.href = '/crypto';
+          } else if (actionId === 'view_map') {
+            window.location.href = '/map';
+          } else if (actionId === 'export_pdf') {
+            window.location.href = '/dossier';
+          } else if (actionId === 'view_stylometry') {
+            window.location.href = '/stylometry';
+          }
+        }}
+      />
+
+      {/* Darknet Ingest Modal */}
+      <DarknetIngestModal
+        isOpen={showIngestModal}
+        onClose={() => setShowIngestModal(false)}
+      />
+
+      {/* Section 91 / BSA 2023 Subpoena Generator */}
+      <LegalSubpoenaModal
+        isOpen={showSubpoenaModal}
+        onClose={() => setShowSubpoenaModal(false)}
+      />
     </header>
   );
 };

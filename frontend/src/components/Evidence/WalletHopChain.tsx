@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { ArrowRight, AlertOctagon, CheckCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { api } from '../../config/api';
+import { MixerPeelChainExplorer } from '../Crypto/MixerPeelChainExplorer';
+import { LegalSubpoenaModal } from '../Legal/LegalSubpoenaModal';
 
 export const WalletHopChain: React.FC = () => {
   const [address, setAddress] = useState('bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq');
   const [loading, setLoading] = useState(false);
+  const [showSubpoena, setShowSubpoena] = useState(false);
 
   const mockHops = [
     {
@@ -177,6 +180,16 @@ export const WalletHopChain: React.FC = () => {
           </div>
         ))}
       </div>
+
+      <div className="mt-6">
+        <MixerPeelChainExplorer onOpenSubpoena={() => setShowSubpoena(true)} />
+      </div>
+
+      <LegalSubpoenaModal
+        isOpen={showSubpoena}
+        onClose={() => setShowSubpoena(false)}
+        defaultNoticeType="exchange"
+      />
     </div>
   );
 };
