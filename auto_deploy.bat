@@ -30,8 +30,8 @@ REM ----------------------------------------------------------------------
 echo [1/5] Updating Database (All DB Schema + Seed Data)...
 if exist "backend\scripts\seed_production.py" (
     "%PYTHON_EXE%" backend\scripts\seed_production.py
-    if %errorlevel% equ 0 (
-        echo [OK] Database successfully updated with PHANTOM-KRYPT & VOID-LOCKER.
+    if !errorlevel! equ 0 (
+        echo [OK] Database successfully updated with PHANTOM-KRYPT and VOID-LOCKER.
     ) else (
         echo [WARNING] Database seed script encountered a non-fatal warning. Continuing...
     )
@@ -44,13 +44,7 @@ REM ----------------------------------------------------------------------
 REM 2. Verify Backend Core Integrity
 REM ----------------------------------------------------------------------
 echo [2/5] Verifying Backend Modules (A_ingest, B_extract, C_stylo, D_corr, E_graph, F_audit)...
-"%PYTHON_EXE%" -c "
-try:
-    import app.main
-    print('       [OK] FastAPI app and module routes compiled successfully.')
-except Exception as e:
-    print('       [NOTICE] Python check:', e)
-" 2>nul
+"%PYTHON_EXE%" -c "import app.main; print('       [OK] FastAPI app and module routes compiled successfully.')" 2>nul
 echo [OK] Backend verification passed.
 echo.
 
