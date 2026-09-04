@@ -8,6 +8,7 @@ import { useWebSocket } from './hooks/useWebSocket';
 // Layout
 import { Navbar } from './components/Layout/Navbar';
 import { Sidebar } from './components/Layout/Sidebar';
+import { MobileBottomNav } from './components/Layout/MobileBottomNav';
 
 // Pages
 import { LoginPage } from './pages/LoginPage';
@@ -55,7 +56,7 @@ const MainLayout: React.FC = () => {
       <div className="flex flex-1 overflow-hidden min-h-0">
         <Sidebar />
 
-        <main className="flex-1 overflow-y-auto bg-[#0b0f19] relative flex flex-col min-h-0 overscroll-contain">
+        <main className="flex-1 overflow-y-auto bg-[#0b0f19] relative flex flex-col min-h-0 overscroll-contain pb-16 md:pb-0">
           <Routes>
             {/* CHECK 13: All routes defined in App.tsx react-router-dom */}
             <Route path="/" element={<Navigate to="/graph" replace />} />
@@ -155,6 +156,9 @@ const MainLayout: React.FC = () => {
           </Routes>
         </main>
       </div>
+
+      {/* Persistent Native Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 };

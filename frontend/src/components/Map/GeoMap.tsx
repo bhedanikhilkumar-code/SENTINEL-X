@@ -19,6 +19,7 @@ interface MapNodePoint {
 
 export const GeoMap: React.FC = () => {
   const store = useStore();
+  const isAiCopilotOpen = store.isAiCopilotOpen;
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
@@ -26,6 +27,16 @@ export const GeoMap: React.FC = () => {
   const initialActorId = store.selectedCaseId?.includes('void') ? 'void-locker' : 'phantom-krypt';
   const [selectedTarget, setSelectedTarget] = useState<string>(initialActorId);
   const [tileMode, setTileMode] = useState<'dark' | 'standard'>('dark');
+
+  // When AI Copilot closes, ensure the map invalidates its size and redraws cleanly
+  useEffect(() => {
+    if (!isAiCopilotOpen && mapInstanceRef.current) {
+      const timer = setTimeout(() => {
+        mapInstanceRef.current?.invalidateSize();
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [isAiCopilotOpen]);
 
   // Build nodes and polylines based on selected target
   const getMapData = () => {
@@ -301,7 +312,13 @@ export const GeoMap: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#111827] rounded-xl border border-cyber-border p-3 sm:p-5 flex flex-col h-full min-h-[580px] select-none shadow-2xl">
+    <div
+      className={`bg-[#111827] rounded-xl border border-cyber-border p-3 sm:p-5 flex flex-col h-full min-h-[520px] sm:min-h-[580px] select-none shadow-2xl transition-opacity duration-150 ${
+        isAiCopilotOpen
+          ? "pointer-events-none select-none invisible sm:visible sm:pointer-events-auto opacity-0 sm:opacity-100"
+          : "visible opacity-100"
+      }`}
+    >
       {/* Map Header Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3 shrink-0">
         <div className="flex items-center space-x-2">

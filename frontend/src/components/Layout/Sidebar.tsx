@@ -71,7 +71,9 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
                 handleNavigate(item.path, item.id);
                 if (isMobile) store.setMobileMenuOpen(false);
               }}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-r-md text-xs font-mono transition-all cursor-pointer border-l-4 ${
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-r-md text-xs font-mono transition-all cursor-pointer border-l-4 touch-press ${
+                isMobile ? 'min-h-[42px]' : ''
+              } ${
                 active
                   ? 'border-l-4 border-cyan-400 bg-cyan-500/15 text-cyan-300 font-bold shadow-glow-cyan'
                   : 'border-l-4 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -152,7 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
       {/* Mobile Slide-Over Drawer */}
       {store.mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm md:hidden flex animate-in fade-in duration-200"
+          className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm md:hidden flex animate-in fade-in duration-200"
           onClick={() => store.setMobileMenuOpen(false)}
         >
           <div

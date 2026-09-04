@@ -22,6 +22,29 @@
   scrollbar-width: none;
 }
 
+/* Mobile Safe Areas (iOS & Android) */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+}
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem));
+}
+.bottom-safe {
+  bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));
+}
+
+/* Mobile Touch Press Micro-Interactions */
+.tap-highlight-none {
+  -webkit-tap-highlight-color: transparent;
+}
+.touch-press {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+.touch-press:active {
+  transform: scale(0.97);
+  opacity: 0.88;
+}
+
 /* Custom Cyber Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -67,18 +90,45 @@
   pointer-events: none;
 }
 
-/* Isolate Leaflet stacking context so map tiles and controls never overlay modals or drawers */
+/* Ensure Leaflet stays strictly isolated within its own low stacking context */
 .leaflet-container {
   isolation: isolate !important;
   z-index: 0 !important;
+  position: relative !important;
 }
 
 .leaflet-pane {
   z-index: 1 !important;
 }
 
-.leaflet-top,
-.leaflet-bottom {
+.leaflet-tile-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-overlay-pane {
+  z-index: 2 !important;
+}
+
+.leaflet-shadow-pane {
+  z-index: 3 !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 4 !important;
+}
+
+.leaflet-tooltip-pane {
   z-index: 5 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 6 !important;
+}
+
+.leaflet-control-container,
+.leaflet-top,
+.leaflet-bottom,
+.leaflet-control {
+  z-index: 10 !important;
 }
 

@@ -3,12 +3,15 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Globe2 } from "lucide-react";
 import { TARGET_ACTORS, ActorData } from "../../lib/threatData";
+import { useStore } from "../../store/useStore";
 
 interface GeoLeafletMapProps {
   actorId?: string;
 }
 
 export function GeoLeafletMap({ actorId = "phantom-krypt" }: GeoLeafletMapProps) {
+  const store = useStore();
+  const isAiCopilotOpen = store.isAiCopilotOpen;
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
@@ -189,8 +192,24 @@ export function GeoLeafletMap({ actorId = "phantom-krypt" }: GeoLeafletMapProps)
     };
   }, [actorId]);
 
+  // When AI Copilot closes, ensure the map invalidates its size and redraws cleanly
+  useEffect(() => {
+    if (!isAiCopilotOpen && mapInstanceRef.current) {
+      const timer = setTimeout(() => {
+        mapInstanceRef.current?.invalidateSize();
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [isAiCopilotOpen]);
+
   return (
-    <div className="relative isolate z-0 w-full h-full min-h-[380px] bg-[#070a13] rounded-2xl border border-cyan-500/20 overflow-hidden shadow-cyber-glow">
+    <div
+      className={`relative isolate z-0 w-full h-full min-h-[350px] bg-[#070a13] rounded-2xl border border-cyan-500/20 overflow-hidden shadow-cyber-glow transition-opacity duration-150 ${
+        isAiCopilotOpen
+          ? "pointer-events-none select-none invisible sm:visible sm:pointer-events-auto opacity-0 sm:opacity-100"
+          : "visible opacity-100"
+      }`}
+    >
       <div className="absolute top-2.5 sm:top-3 left-2 sm:left-3 z-10 flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[11px] sm:text-xs font-mono">
         <Globe2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse shrink-0" />
         <span className="font-bold text-slate-100 hidden sm:inline">GEOSPATIAL THREAT TRACE</span>

@@ -56,6 +56,20 @@ Select an automated investigative query below or enter freeform questions regard
 
   const [messages, setMessages] = useState<Message[]>(initialMessages);
 
+  // Prevent mobile background page scrolling / touch gesture bubbling while Copilot is open
+  useEffect(() => {
+    if (isOpen) {
+      const origOverflow = document.body.style.overflow;
+      const origTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = origOverflow;
+        document.body.style.touchAction = origTouchAction;
+      };
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
@@ -208,28 +222,31 @@ The suspect relies on a 3-hop Tor SOCKS5 circuit exiting in Western Europe, but 
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-end bg-[#080d1a] sm:bg-black/80 sm:backdrop-blur-sm animate-in fade-in duration-200 overflow-hidden"
+      style={{ height: '100dvh', maxHeight: '100dvh' }}
+    >
       <div
-        className="w-full max-w-2xl h-full bg-[#080d1a] border-l border-cyan-500/40 shadow-2xl flex flex-col justify-between font-sans select-none animate-in slide-in-from-right duration-200"
+        className="w-full sm:max-w-2xl h-full bg-[#080d1a] border-none sm:border-l sm:border-cyan-500/40 shadow-2xl flex flex-col justify-between font-sans select-none animate-in slide-in-from-right duration-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-3.5 bg-[#0b1329] border-b border-slate-800 flex items-center justify-between shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500/30 to-blue-600/40 border border-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.4)]">
+        <div className="px-4 sm:px-5 py-3 sm:py-3.5 bg-[#0b1329] border-b border-slate-800 flex items-center justify-between shrink-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500/30 to-blue-600/40 border border-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.4)] shrink-0">
               <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-mono font-bold text-white text-sm tracking-wider">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                <span className="font-mono font-bold text-white text-xs sm:text-sm tracking-wider">
                   SPECTER<span className="text-cyan-400">-AI</span> COPILOT
                 </span>
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+                <span className="text-[8px] sm:text-[9px] font-mono px-1.5 sm:px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
                   REASONING ENGINE
                 </span>
               </div>
-              <div className="text-[10px] font-mono text-slate-400">
-                Target Context: <b className="text-cyan-300">{currentActor.codename}</b> ({currentActor.attributionConfidence}% C_total)
+              <div className="text-[9.5px] sm:text-[10px] font-mono text-slate-400 truncate max-w-[210px] sm:max-w-none">
+                Target: <b className="text-cyan-300">{currentActor.codename}</b> ({currentActor.attributionConfidence}% C_total)
               </div>
             </div>
           </div>
@@ -243,7 +260,7 @@ The suspect relies on a 3-hop Tor SOCKS5 circuit exiting in Western Europe, but 
         </div>
 
         {/* Messages Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-xs">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 font-mono text-xs touch-pan-y overscroll-contain">
           {messages.map((m) => {
             const isUser = m.sender === 'user';
             return (
@@ -313,20 +330,20 @@ The suspect relies on a 3-hop Tor SOCKS5 circuit exiting in Western Europe, but 
         </div>
 
         {/* Suggested Quick Prompt Chips */}
-        <div className="px-4 py-2 border-t border-slate-800/80 bg-[#0a0f1d] flex flex-wrap gap-1.5 shrink-0">
+        <div className="px-3.5 py-2 border-t border-slate-800/80 bg-[#0a0f1d] flex overflow-x-auto no-scrollbar sm:flex-wrap gap-2 shrink-0">
           {quickPrompts.map((qp, i) => (
             <button
               key={i}
               onClick={() => handleSend(qp.prompt)}
-              className="px-2.5 py-1 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-cyan-300 text-[10px] font-mono transition cursor-pointer"
+              className="px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-cyan-300 text-[10.5px] font-mono transition whitespace-nowrap touch-press cursor-pointer"
             >
               ⚡ {qp.label}
             </button>
           ))}
         </div>
 
-        {/* Input Bar */}
-        <div className="p-3.5 bg-[#0b1329] border-t border-slate-800 shrink-0">
+        {/* Input Bar with Safe Area Bottom */}
+        <div className="p-3 sm:p-3.5 bg-[#0b1329] border-t border-slate-800 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))]">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -338,13 +355,13 @@ The suspect relies on a 3-hop Tor SOCKS5 circuit exiting in Western Europe, but 
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`Ask SPECTER-AI about ${currentActor.codename}, wallet hops, or court evidence...`}
-              className="flex-1 bg-black/60 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              placeholder={`Ask SPECTER-AI about ${currentActor.codename}...`}
+              className="flex-1 bg-black/60 border border-slate-700 rounded-xl px-3.5 py-2.5 min-h-[44px] text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
             />
             <button
               type="submit"
               disabled={!input.trim()}
-              className="p-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 text-black font-bold transition shadow-glow-cyan cursor-pointer"
+              className="p-2.5 min-h-[44px] min-w-[44px] rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 text-black font-bold transition shadow-glow-cyan flex items-center justify-center touch-press cursor-pointer"
             >
               <Send className="w-4 h-4" />
             </button>

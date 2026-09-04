@@ -163,7 +163,7 @@ ${ioName}`;
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 animate-in fade-in duration-200">
       <div
         className="w-full max-w-4xl max-h-[95vh] bg-[#090e1c] border border-cyan-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-sans select-none animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}

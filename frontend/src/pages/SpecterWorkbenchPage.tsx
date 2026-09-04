@@ -21,6 +21,9 @@ import {
   Sparkles,
   Scale,
   UploadCloud,
+  Maximize2,
+  Minimize2,
+  Activity,
 } from "lucide-react";
 
 export function SpecterWorkbenchPage() {
@@ -30,9 +33,17 @@ export function SpecterWorkbenchPage() {
   const [isTimelineOpen, setIsTimelineOpen] = useState<boolean>(false);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
   const [mobileActiveZone, setMobileActiveZone] = useState<'graph' | 'dossier' | 'evidence' | 'stylometry' | 'all'>('graph');
+  const [isFullscreenGraph, setIsFullscreenGraph] = useState<boolean>(false);
 
   // Listen for global custom events from Copilot AI / Navbar
   useEffect(() => {
+    const pendingTab = sessionStorage.getItem('sentinel_pending_tab');
+    if (pendingTab === 'map' || pendingTab === 'graph') {
+      setCenterTab(pendingTab as any);
+      setMobileActiveZone('graph');
+      sessionStorage.removeItem('sentinel_pending_tab');
+    }
+
     const handleSwitchTab = (e: any) => {
       if (e.detail === 'map') {
         setCenterTab('map');
@@ -168,12 +179,12 @@ export function SpecterWorkbenchPage() {
       {/* ========================================================================= */}
       {/* MOBILE ZONE TABS (Shown on screens < lg) */}
       {/* ========================================================================= */}
-      <div className="lg:hidden px-2 py-1.5 bg-[#0b1220] border-b border-slate-800 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0 text-xs font-mono">
-        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider pl-1 shrink-0">ZONE:</span>
+      <div className="lg:hidden px-2.5 py-2 bg-[#090f1d] border-b border-cyan-500/20 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0 text-xs font-mono">
+        <span className="text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider pl-1 shrink-0">ZONE:</span>
         {[
+          { id: 'dossier', label: 'Dossier', icon: ShieldAlert, badge: `${currentActor.attributionConfidence.toFixed(0)}%` },
           { id: 'graph', label: 'Graph & Map', icon: Share2 },
-          { id: 'dossier', label: 'Dossier', icon: ShieldAlert },
-          { id: 'evidence', label: 'Evidence', icon: Layers },
+          { id: 'evidence', label: 'Evidence', icon: Layers, badge: '6/6' },
           { id: 'stylometry', label: 'Stylometry', icon: Sparkles },
           { id: 'all', label: 'All Zones', icon: Globe2 },
         ].map((tab) => {
@@ -183,14 +194,19 @@ export function SpecterWorkbenchPage() {
             <button
               key={tab.id}
               onClick={() => setMobileActiveZone(tab.id as any)}
-              className={`px-2.5 py-1 rounded-lg font-bold flex items-center space-x-1 whitespace-nowrap transition cursor-pointer text-[11px] ${
+              className={`px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1.5 whitespace-nowrap transition touch-press cursor-pointer text-[11px] ${
                 isActive
-                  ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
-                  : 'bg-slate-900/70 text-slate-400 border border-slate-800 hover:text-slate-200'
+                  ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400 shadow-glow-cyan'
+                  : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200'
               }`}
             >
-              <Icon className="w-3 h-3" />
+              <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
+              {tab.badge && (
+                <span className={`text-[9px] px-1 py-0.2 rounded font-mono ${isActive ? 'bg-cyan-950 text-cyan-200 border border-cyan-700' : 'bg-black/50 text-slate-400'}`}>
+                  {tab.badge}
+                </span>
+              )}
             </button>
           );
         })}
@@ -234,7 +250,7 @@ export function SpecterWorkbenchPage() {
               <div className="flex items-center space-x-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800">
                 <button
                   onClick={() => setCenterTab("graph")}
-                  className={`px-2 sm:px-3 py-1 rounded-md text-[10px] sm:text-[11px] font-bold flex items-center space-x-1 sm:space-x-1.5 transition cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1 rounded-md text-[10px] sm:text-[11px] font-bold flex items-center space-x-1 sm:space-x-1.5 transition cursor-pointer touch-press ${
                     centerTab === "graph"
                       ? "bg-cyan-950 text-cyan-400 border border-cyan-700 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
                       : "text-slate-400 hover:text-slate-200"
@@ -246,7 +262,7 @@ export function SpecterWorkbenchPage() {
                 </button>
                 <button
                   onClick={() => setCenterTab("map")}
-                  className={`px-2 sm:px-3 py-1 rounded-md text-[10px] sm:text-[11px] font-bold flex items-center space-x-1 sm:space-x-1.5 transition cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1 rounded-md text-[10px] sm:text-[11px] font-bold flex items-center space-x-1 sm:space-x-1.5 transition cursor-pointer touch-press ${
                     centerTab === "map"
                       ? "bg-cyan-950 text-cyan-400 border border-cyan-700 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
                       : "text-slate-400 hover:text-slate-200"
@@ -259,24 +275,59 @@ export function SpecterWorkbenchPage() {
               </div>
             </div>
 
-            <div className="text-[10px] text-slate-400 font-mono hidden md:block">
-              Target: <b className="text-cyan-400">{currentActor.codename}</b>
+            <div className="flex items-center space-x-2">
+              {/* Mobile Fullscreen Toggle Button */}
+              <button
+                onClick={() => setIsFullscreenGraph(!isFullscreenGraph)}
+                className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-cyan-300 hover:text-white flex items-center space-x-1 text-[10px] font-bold font-mono transition touch-press"
+                title={isFullscreenGraph ? "Exit Fullscreen" : "Explore in Fullscreen"}
+              >
+                {isFullscreenGraph ? <Minimize2 className="w-3 h-3 text-cyan-400" /> : <Maximize2 className="w-3 h-3 text-cyan-400" />}
+                <span className="hidden sm:inline">{isFullscreenGraph ? 'Exit' : 'Fullscreen'}</span>
+              </button>
+
+              <div className="text-[10px] text-slate-400 font-mono hidden md:block">
+                Target: <b className="text-cyan-400">{currentActor.codename}</b>
+              </div>
             </div>
           </div>
 
           {/* ZONE 2: RENDER CYTOSCAPE GRAPH OR LEAFLET MAP */}
           <div
-            className={`min-h-[320px] sm:min-h-[360px] h-[350px] sm:h-auto ${
+            className={`min-h-[350px] sm:min-h-[380px] h-[400px] sm:h-auto ${
               mobileActiveZone === 'stylometry'
                 ? 'hidden lg:block lg:flex-1'
                 : 'flex-1'
+            } ${
+              isFullscreenGraph
+                ? 'fixed inset-0 z-50 bg-[#070a13] p-3 flex flex-col'
+                : ''
             }`}
           >
-            {centerTab === "graph" ? (
-              <KnowledgeGraph actorId={currentActor.id} caseId={caseId} />
-            ) : (
-              <GeoLeafletMap actorId={currentActor.id} />
+            {isFullscreenGraph && (
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 font-mono text-xs">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                  <span className="font-bold text-white uppercase">
+                    Fullscreen {centerTab === 'graph' ? 'Knowledge Graph' : 'Geo-Attribution Map'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setIsFullscreenGraph(false)}
+                  className="px-3 py-1 rounded-lg bg-cyan-500 text-black font-bold flex items-center space-x-1"
+                >
+                  <Minimize2 className="w-3.5 h-3.5" />
+                  <span>Exit Fullscreen</span>
+                </button>
+              </div>
             )}
+            <div className="flex-1 h-full min-h-0">
+              {centerTab === "graph" ? (
+                <KnowledgeGraph actorId={currentActor.id} caseId={caseId} />
+              ) : (
+                <GeoLeafletMap actorId={currentActor.id} />
+              )}
+            </div>
           </div>
 
           {/* TOR CIRCUIT TOPOLOGY PIPELINE */}

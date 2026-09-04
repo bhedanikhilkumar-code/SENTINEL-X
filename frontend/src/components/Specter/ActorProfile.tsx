@@ -60,25 +60,25 @@ export function ActorProfile({
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => onSelectActor("phantom-krypt")}
-            className={`p-2 rounded-lg text-left transition ${
+            className={`p-2.5 min-h-[44px] rounded-xl text-left transition touch-press ${
               actor.id === "phantom-krypt"
                 ? "bg-slate-900 border-l-4 border-l-cyan-400 border border-slate-700 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]"
                 : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"
             }`}
           >
-            <div className="font-bold text-[10.5px]">PHANTOM-KRYPT</div>
-            <div className="text-[9px] text-emerald-400 font-bold">DE-CLOAKED (94.8%)</div>
+            <div className="font-bold text-[11px]">PHANTOM-KRYPT</div>
+            <div className="text-[9.5px] text-emerald-400 font-bold">DE-CLOAKED (94.8%)</div>
           </button>
           <button
             onClick={() => onSelectActor("void-locker")}
-            className={`p-2 rounded-lg text-left transition ${
+            className={`p-2.5 min-h-[44px] rounded-xl text-left transition touch-press ${
               actor.id === "void-locker"
                 ? "bg-slate-900 border-l-4 border-l-cyan-400 border border-slate-700 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]"
                 : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"
             }`}
           >
-            <div className="font-bold text-[10.5px]">VOID-LOCKER</div>
-            <div className="text-[9px] text-amber-400 font-bold">TRACKING (61.3%)</div>
+            <div className="font-bold text-[11px]">VOID-LOCKER</div>
+            <div className="text-[9.5px] text-amber-400 font-bold">TRACKING (61.3%)</div>
           </button>
         </div>
 
@@ -176,24 +176,24 @@ export function ActorProfile({
             <span className="text-emerald-400 font-bold">Anchored</span>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {actor.clearnetFootprint.map((fp, i) => (
               <a
                 key={i}
                 href={fp.url}
                 target="_blank"
                 rel="noreferrer"
-                className="p-1.5 rounded-lg bg-slate-950/80 border border-slate-800 hover:border-cyan-500/50 flex items-center justify-between text-[11px] group transition"
+                className="p-2 min-h-[40px] rounded-xl bg-slate-950/80 border border-slate-800 hover:border-cyan-500/50 flex items-center justify-between text-[11px] group transition touch-press"
               >
                 <div className="flex items-center space-x-2">
-                  <span className="px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 uppercase text-[9px] font-bold">
+                  <span className="px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 uppercase text-[9px] font-bold">
                     {fp.platform}
                   </span>
                   <span className="text-slate-200 group-hover:text-cyan-300 font-mono">
                     {fp.handle}
                   </span>
                 </div>
-                <div className="flex items-center space-x-1 text-[10px] text-emerald-400">
+                <div className="flex items-center space-x-1.5 text-[10px] text-emerald-400">
                   <span>{(fp.confidence * 100).toFixed(0)}%</span>
                   <ExternalLink className="w-3 h-3 text-slate-500 group-hover:text-cyan-400" />
                 </div>
@@ -205,10 +205,10 @@ export function ActorProfile({
 
       {/* Bottom Timeline Modal Trigger */}
       {onOpenTimelineModal && (
-        <div className="pt-2 border-t border-slate-800">
+        <div className="pt-2.5 border-t border-slate-800">
           <button
             onClick={onOpenTimelineModal}
-            className="w-full py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition flex items-center justify-center space-x-2 text-[11px] font-bold"
+            className="w-full py-2.5 min-h-[44px] rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition flex items-center justify-center space-x-2 text-[11px] font-bold touch-press cursor-pointer"
           >
             <Clock className="w-3.5 h-3.5 text-cyan-400" />
             <span>Open Attribution Timeline</span>

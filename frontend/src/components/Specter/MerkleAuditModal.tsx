@@ -114,7 +114,7 @@ export function MerkleAuditModal({ isOpen, onClose, caseId = "1" }: MerkleAuditM
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none font-mono">
+    <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none font-mono">
       <div className="bg-[#0b1220] border border-[rgba(0,240,255,0.25)] rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-cyber-glow animate-in zoom-in-95 duration-200">
         {/* Modal Header */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">

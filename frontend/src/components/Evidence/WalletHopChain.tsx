@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowRight, AlertOctagon, CheckCircle, ExternalLink, RefreshCw } from 'lucide-react';
+import { ArrowRight, AlertOctagon, CheckCircle, ExternalLink, RefreshCw, Copy, Check } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { api } from '../../config/api';
 import { MixerPeelChainExplorer } from '../Crypto/MixerPeelChainExplorer';
 import { LegalSubpoenaModal } from '../Legal/LegalSubpoenaModal';
@@ -8,6 +9,14 @@ export const WalletHopChain: React.FC = () => {
   const [address, setAddress] = useState('bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq');
   const [loading, setLoading] = useState(false);
   const [showSubpoena, setShowSubpoena] = useState(false);
+  const [copiedAddr, setCopiedAddr] = useState<string | null>(null);
+
+  const copyAddress = (addr: string, id: string) => {
+    navigator.clipboard.writeText(addr);
+    setCopiedAddr(id);
+    toast.success('Address copied to clipboard');
+    setTimeout(() => setCopiedAddr(null), 2000);
+  };
 
   const mockHops = [
     {
@@ -144,10 +153,11 @@ export const WalletHopChain: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      {/* Desktop Horizontal Hop Pipeline (>= md) */}
+      <div className="hidden md:grid md:grid-cols-4 gap-3">
         {hops.map((h, idx) => (
           <div key={idx} className="relative">
-            <div className={`p-3.5 rounded-lg border ${h.color} flex flex-col justify-between h-full`}>
+            <div className={`p-3.5 rounded-xl border ${h.color} flex flex-col justify-between h-full shadow-lg`}>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-mono font-bold tracking-wider uppercase">
@@ -163,9 +173,14 @@ export const WalletHopChain: React.FC = () => {
               </div>
 
               <div>
-                <div className="p-1.5 rounded bg-black/60 border border-cyber-border text-[10px] font-mono break-all text-slate-300 mb-2">
-                  {h.address}
-                </div>
+                <button
+                  onClick={() => copyAddress(h.address, `h-${idx}`)}
+                  className="w-full text-left p-1.5 rounded bg-black/60 border border-cyber-border text-[10px] font-mono break-all text-slate-300 mb-2 flex items-center justify-between hover:border-cyan-400 transition"
+                  title="Click to copy address"
+                >
+                  <span className="truncate">{h.address}</span>
+                  {copiedAddr === `h-${idx}` ? <Check className="w-3 h-3 text-emerald-400 shrink-0 ml-1" /> : <Copy className="w-3 h-3 text-slate-500 shrink-0 ml-1" />}
+                </button>
                 <div className="text-[10px] font-mono font-semibold">
                   Risk Assessment: {h.risk}
                 </div>
@@ -177,6 +192,51 @@ export const WalletHopChain: React.FC = () => {
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             )}
+          </div>
+        ))}
+      </div>
+
+      {/* Mobile Vertical Flow Pipeline (< md) */}
+      <div className="md:hidden space-y-3 relative pl-6 border-l-2 border-cyan-500/30 ml-2.5 my-2">
+        {hops.map((h, idx) => (
+          <div key={idx} className="relative">
+            {/* Connected Step Node Dot */}
+            <div className="absolute -left-[32px] top-3.5 w-4 h-4 rounded-full bg-[#0b1220] border-2 border-cyan-400 flex items-center justify-center shadow-glow-cyan">
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            </div>
+
+            <div className={`p-3.5 rounded-xl border ${h.color} space-y-2`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-black/40 border border-current">
+                    HOP #{h.hop}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-white">
+                    {h.type}
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/50 border border-current font-bold">
+                  {h.amount}
+                </span>
+              </div>
+
+              <button
+                onClick={() => copyAddress(h.address, `mob-h-${idx}`)}
+                className="w-full text-left p-2 rounded-lg bg-black/60 border border-slate-700/80 text-[10.5px] font-mono break-all text-cyan-300 flex items-center justify-between touch-press"
+              >
+                <span className="truncate mr-2">{h.address}</span>
+                {copiedAddr === `mob-h-${idx}` ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                )}
+              </button>
+
+              <div className="flex items-center justify-between text-[10px] font-mono pt-0.5">
+                <span className="text-slate-400">Risk Assessment:</span>
+                <span className="font-bold">{h.risk}</span>
+              </div>
+            </div>
           </div>
         ))}
       </div>
