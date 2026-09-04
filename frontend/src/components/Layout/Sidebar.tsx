@@ -11,6 +11,7 @@ import {
   Lock,
   Clock,
   X,
+  Download,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
@@ -130,6 +131,24 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
               </div>
               {navContent(true)}
             </div>
+
+            {/* Mobile PWA Install / Home Screen Prompt */}
+            <div className="px-4 pb-2">
+              <button
+                onClick={() => {
+                  if ((window as any).deferredInstallPrompt) {
+                    (window as any).deferredInstallPrompt.prompt();
+                  } else {
+                    alert("To install SENTINEL-X:\n1. Tap your browser menu (⋮ or Share)\n2. Select 'Add to Home screen' / 'Install app'");
+                  }
+                }}
+                className="w-full py-2 px-3 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-mono text-[11px] flex items-center justify-center space-x-2 transition cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Install Mobile App (PWA)</span>
+              </button>
+            </div>
+
             {footerClassification}
           </div>
         </div>

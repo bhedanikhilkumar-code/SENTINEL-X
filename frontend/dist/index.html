@@ -3,8 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>SENTINEL-X — Dark Web Threat Actor De-Anonymization Platform (NTRO SIH26151)</title>
+    
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#070a13" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SENTINEL-X" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+
     <!-- Google Fonts for Cyber Theme: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,10 +27,24 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       crossorigin=""
     />
-    <script type="module" crossorigin src="/assets/index-BwfPGp6t.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CMOvvhWj.css">
+    <script type="module" crossorigin src="/assets/index-BRZ0VxxG.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-S_5FxkVk.css">
   </head>
   <body class="bg-[#0b0f19] text-slate-100 font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-300">
     <div id="root"></div>
+    <script>
+      window.deferredInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredInstallPrompt = e;
+      });
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => {
+            console.log('SW registration skipped:', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

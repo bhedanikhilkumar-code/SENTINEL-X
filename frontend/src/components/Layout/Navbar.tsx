@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Radio, UserCheck, LogOut, Bell, X, AlertTriangle, CheckCircle, Server, Link2, Loader2, Check, Menu } from 'lucide-react';
+import { Shield, Radio, UserCheck, LogOut, Bell, X, AlertTriangle, CheckCircle, Server, Link2, Loader2, Check, Menu, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useStore } from '../../store/useStore';
 import { api, getBackendUrl, setBackendUrl } from '../../config/api';
@@ -29,6 +29,26 @@ export const Navbar: React.FC = () => {
   const [backendUrlInput, setBackendUrlInput] = useState(getBackendUrl());
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [testingBackend, setTestingBackend] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallPwa = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      toast.success('SENTINEL-X App Installed successfully!');
+      setInstallPrompt(null);
+    }
+  };
 
   // CHECK 19: Decode real user details from JWT token
   const token =
@@ -209,6 +229,18 @@ export const Navbar: React.FC = () => {
 
       {/* User / Authentication Badge (CHECK 19 & CHECK 20) */}
       <div className="flex items-center space-x-2 sm:space-x-4">
+        {installPrompt && (
+          <button
+            onClick={handleInstallPwa}
+            className="flex items-center space-x-1.5 px-2 sm:px-2.5 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 text-[10px] sm:text-xs font-mono transition cursor-pointer shadow-glow-cyan animate-pulse"
+            title="Install SENTINEL-X as Native App"
+          >
+            <Download className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">INSTALL APP</span>
+            <span className="sm:hidden">APP</span>
+          </button>
+        )}
+
         <div className="flex items-center space-x-2 sm:space-x-3 pl-2 sm:pl-3 border-l border-cyber-border">
           <div className="text-right hidden sm:block">
             <div className="text-xs font-medium text-white flex items-center justify-end space-x-1">
