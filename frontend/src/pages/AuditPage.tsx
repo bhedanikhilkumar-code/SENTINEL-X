@@ -4,22 +4,22 @@ import { ShieldCheck, Scale, FileText, CheckCircle2, Lock } from 'lucide-react';
 
 export const AuditPage: React.FC = () => {
   return (
-    <div className="p-8 space-y-8 bg-[#0b0f19] min-h-screen text-slate-100">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-5 sm:space-y-8 bg-[#0b0f19] min-h-screen text-slate-100 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-slate-800 gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-4 sm:pb-6 border-b border-slate-800 gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
-              <ShieldCheck className="w-7 h-7" />
+            <div className="p-2 sm:p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400 shrink-0">
+              <ShieldCheck className="w-5 h-5 sm:w-7 sm:h-7" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-wide text-white flex items-center gap-3">
-                Evidence Integrity & Audit Ledger
-                <span className="text-xs font-mono uppercase bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/30">
+              <h1 className="text-lg sm:text-2xl font-bold tracking-wide text-white flex flex-wrap items-center gap-2 sm:gap-3">
+                <span>Evidence Integrity & Audit Ledger</span>
+                <span className="text-[10px] sm:text-xs font-mono uppercase bg-emerald-500/20 text-emerald-400 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-emerald-500/30">
                   Sec 65B Compliant
                 </span>
               </h1>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-[11px] sm:text-sm text-slate-400 mt-1">
                 Cryptographic SHA-256 Merkle chain verification guaranteeing tamper-proof chain of custody
               </p>
             </div>
@@ -27,7 +27,7 @@ export const AuditPage: React.FC = () => {
         </div>
 
         {/* Top Status Cards */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="px-4 py-2 bg-slate-900/80 border border-slate-800 rounded-lg text-right">
             <p className="text-xs text-slate-500 uppercase font-mono">Ledger State</p>
             <p className="text-sm font-semibold text-emerald-400 flex items-center gap-1.5 justify-end">

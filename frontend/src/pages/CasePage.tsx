@@ -124,9 +124,9 @@ export const CasePage: React.FC<CasePageProps> = ({ caseId: propCaseId }) => {
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-5 max-w-7xl mx-auto">
       {/* Case Header Banner */}
-      <div className="bg-[#111827] rounded-lg border border-cyber-border p-5">
+      <div className="bg-[#111827] rounded-lg border border-cyber-border p-3 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2 mb-1">
@@ -137,20 +137,20 @@ export const CasePage: React.FC<CasePageProps> = ({ caseId: propCaseId }) => {
                 Initiated: {caseDetails?.created_at ? new Date(caseDetails.created_at).toLocaleDateString() : 'Active'}
               </span>
             </div>
-            <h2 className="text-lg font-mono font-bold text-white tracking-wide">
+            <h2 className="text-base sm:text-lg font-mono font-bold text-white tracking-wide">
               {caseDetails?.title || 'Case Investigation'}
             </h2>
-            <p className="text-xs font-mono text-slate-400 mt-1 max-w-3xl">
+            <p className="text-[11px] sm:text-xs font-mono text-slate-400 mt-1 max-w-3xl">
               {caseDetails?.description}
             </p>
           </div>
 
-          <div className="flex items-center space-x-6">
-            <div className="text-right">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+            <div className="text-left sm:text-right">
               <span className="text-[10px] font-mono text-slate-400 uppercase">
                 Confidence C_total
               </span>
-              <div className="text-2xl font-mono font-bold text-red-400">
+              <div className="text-xl sm:text-2xl font-mono font-bold text-red-400">
                 {(latestConf * 100).toFixed(1)}%
               </div>
               <span className="text-[10px] font-mono font-bold text-red-400 uppercase">

@@ -94,27 +94,27 @@ export const DossierExport: React.FC<DossierExportProps> = ({ caseData }) => {
   };
 
   return (
-    <div className="bg-[#111827] rounded-lg border border-cyber-border p-6 max-w-2xl mx-auto shadow-2xl">
+    <div className="bg-[#111827] rounded-lg border border-cyber-border p-4 sm:p-6 max-w-2xl mx-auto shadow-2xl">
       <div className="flex items-center space-x-3 mb-4">
-        <div className="p-2 rounded bg-cyan-500/10 border border-cyan-500/40 shadow-glow-cyan">
-          <FileText className="w-6 h-6 text-cyan-400" />
+        <div className="p-2 rounded bg-cyan-500/10 border border-cyan-500/40 shadow-glow-cyan shrink-0">
+          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400" />
         </div>
         <div>
-          <h3 className="font-mono font-bold text-white text-base">
+          <h3 className="font-mono font-bold text-white text-sm sm:text-base">
             Forensic Intelligence Dossier Export (Module F)
           </h3>
-          <p className="text-xs font-mono text-slate-400">
+          <p className="text-[11px] sm:text-xs font-mono text-slate-400">
             Generates 6-page court-admissible PDF certified with SHA-256 evidence hashes
           </p>
         </div>
       </div>
 
-      <div className="space-y-2 mb-6 text-xs font-mono text-slate-300 bg-black/40 border border-cyber-border rounded-lg p-4">
+      <div className="space-y-2 mb-5 sm:mb-6 text-xs font-mono text-slate-300 bg-black/40 border border-cyber-border rounded-lg p-3 sm:p-4">
         <div className="flex items-center space-x-2 text-cyan-300 font-bold mb-1">
-          <ShieldCheck className="w-4 h-4 text-cyan-400" />
-          <span>Dossier Table of Contents & Forensic Sections:</span>
+          <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" />
+          <span className="text-[11px] sm:text-xs">Dossier Table of Contents & Forensic Sections:</span>
         </div>
-        <ul className="list-disc list-inside space-y-1 text-slate-400">
+        <ul className="list-disc list-inside space-y-1 text-slate-400 text-[11px] sm:text-xs">
           <li>Page 1: Classified NTRO Cover Page, Seal & Metadata</li>
           <li>Page 2: Target Summary & Correlated Clearnet Anchors</li>
           <li>Page 3: Bayesian Confidence Breakdown ($C_{`{total}`}$) & Evidence Weights</li>
@@ -131,7 +131,7 @@ export const DossierExport: React.FC<DossierExportProps> = ({ caseData }) => {
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
         {/* CHECK 15: Hash-Chain Integrity Verified Badge */}
         {verifying ? (
           <div className="flex items-center space-x-1.5 text-xs font-mono text-slate-400">
@@ -139,12 +139,12 @@ export const DossierExport: React.FC<DossierExportProps> = ({ caseData }) => {
             <span>VERIFYING CHAIN...</span>
           </div>
         ) : chainValid ? (
-          <div className="flex items-center space-x-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-md border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+          <div className="inline-flex items-center space-x-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-md border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span className="font-bold tracking-wider">✓ CHAIN INTACT</span>
           </div>
         ) : (
-          <div className="flex items-center space-x-1.5 text-xs font-mono text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-md border border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.2)]">
+          <div className="inline-flex items-center space-x-1.5 text-xs font-mono text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-md border border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.2)]">
             <AlertCircle className="w-4 h-4 text-rose-400" />
             <span className="font-bold tracking-wider">✗ TAMPERED</span>
           </div>
@@ -154,7 +154,7 @@ export const DossierExport: React.FC<DossierExportProps> = ({ caseData }) => {
         <button
           onClick={handleDownloadReportLab}
           disabled={downloading}
-          className="flex items-center space-x-2 px-6 py-2.5 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-xs shadow-glow-cyan transition-colors disabled:opacity-60 cursor-pointer"
+          className="flex items-center justify-center space-x-2 px-5 sm:px-6 py-2.5 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-xs shadow-glow-cyan transition-colors disabled:opacity-60 cursor-pointer w-full sm:w-auto"
         >
           {downloading ? (
             <Loader2 className="w-4 h-4 animate-spin text-black" />

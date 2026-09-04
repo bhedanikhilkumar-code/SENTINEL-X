@@ -16,27 +16,27 @@ export const DossierExportPage: React.FC = () => {
   const isVoid = selectedCase === '2';
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6 font-sans">
+    <div className="p-3 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-4 sm:space-y-6 font-sans">
       {/* Top Banner & Case Switcher */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyber-border pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyber-border pb-4 sm:pb-6">
         <div>
-          <div className="flex items-center space-x-2 text-xs font-mono text-cyan-400 uppercase tracking-wider mb-1">
-            <ShieldAlert className="w-4 h-4 text-cyan-400" />
+          <div className="flex items-center space-x-2 text-[10px] sm:text-xs font-mono text-cyan-400 uppercase tracking-wider mb-1">
+            <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
             <span>NTRO (SIH26151) // LEGAL ADMISSIBILITY APPARATUS</span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-wide font-mono">
+          <h1 className="text-lg sm:text-2xl font-bold text-white tracking-wide font-mono">
             Court-Admissible Forensic Dossier Export Engine
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">
+          <p className="text-[11px] sm:text-xs text-slate-400 font-mono mt-1">
             Certified cryptographic intelligence dossier compiled per Section 65B Indian Evidence Act standards.
           </p>
         </div>
 
         {/* Case Toggle */}
-        <div className="flex items-center space-x-2 bg-slate-950 p-1 rounded-xl border border-slate-800 font-mono text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800 font-mono text-xs">
           <button
             onClick={() => handleCaseChange('1')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-bold transition cursor-pointer text-[11px] sm:text-xs ${
               !isVoid
                 ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-glow-cyan'
                 : 'text-slate-400 hover:text-slate-200'
@@ -46,7 +46,7 @@ export const DossierExportPage: React.FC = () => {
           </button>
           <button
             onClick={() => handleCaseChange('2')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-bold transition cursor-pointer text-[11px] sm:text-xs ${
               isVoid
                 ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-glow-cyan'
                 : 'text-slate-400 hover:text-slate-200'

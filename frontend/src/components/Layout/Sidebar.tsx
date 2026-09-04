@@ -10,6 +10,7 @@ import {
   MapPin,
   Lock,
   Clock,
+  X,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
@@ -44,54 +45,97 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
     navigate(path);
   };
 
+  const navContent = (isMobile: boolean = false) => (
+    <div className="py-4">
+      <div className="px-6 mb-3 text-[10px] font-mono tracking-widest text-slate-500 uppercase flex items-center justify-between">
+        <span>Investigation Modules</span>
+      </div>
+
+      <nav className="space-y-1 px-3">
+        {navigationItems.map((item) => {
+          const Icon = item.icon;
+          const active =
+            location.pathname === item.path ||
+            (item.path === '/graph' && (location.pathname === '/' || location.pathname === '')) ||
+            (item.path === '/crypto' && location.pathname === '/blockchain') ||
+            props.currentView === item.id;
+
+          return (
+            <button
+              key={item.path}
+              onClick={() => {
+                handleNavigate(item.path, item.id);
+                if (isMobile) store.setMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-r-md text-xs font-mono transition-all cursor-pointer border-l-4 ${
+                active
+                  ? 'border-l-4 border-cyan-400 bg-cyan-500/15 text-cyan-300 font-bold shadow-glow-cyan'
+                  : 'border-l-4 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Icon className={`w-4 h-4 ${active ? 'text-cyan-400' : 'text-slate-400'}`} />
+              <span className="truncate">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+
+  const footerClassification = (
+    <div className="p-4 border-t border-cyber-border bg-black/20">
+      <div className="p-2.5 rounded bg-yellow-500/10 border border-yellow-500/30 text-center">
+        <div className="text-[10px] font-mono font-bold text-yellow-400 uppercase tracking-wider">
+          TOP SECRET // NTRO // COMINT
+        </div>
+        <div className="text-[9px] text-yellow-300/80 font-mono mt-0.5">
+          Classified Attribution Platform
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <aside className="w-64 bg-[#111827] border-r border-cyber-border flex flex-col justify-between shrink-0 select-none">
-      <div className="py-4">
-        <div className="px-6 mb-3 text-[10px] font-mono tracking-widest text-slate-500 uppercase">
-          Investigation Modules
-        </div>
+    <>
+      {/* Desktop Sidebar (Fixed Left) */}
+      <aside className="hidden md:flex w-64 bg-[#111827] border-r border-cyber-border flex-col justify-between shrink-0 select-none">
+        {navContent(false)}
+        {footerClassification}
+      </aside>
 
-        <nav className="space-y-1 px-3">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const active =
-              location.pathname === item.path ||
-              (item.path === '/graph' && (location.pathname === '/' || location.pathname === '')) ||
-              (item.path === '/crypto' && location.pathname === '/blockchain') ||
-              props.currentView === item.id;
-
-            return (
-              <button
-                key={item.path}
-                onClick={() => handleNavigate(item.path, item.id)}
-                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-r-md text-xs font-mono transition-all cursor-pointer border-l-4 ${
-                  active
-                    ? 'border-l-4 border-cyan-400 bg-cyan-500/15 text-cyan-300 font-bold shadow-glow-cyan'
-                    : 'border-l-4 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${active ? 'text-cyan-400' : 'text-slate-400'}`} />
-                <span className="truncate">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* System Classification Notice */}
-      <div className="p-4 border-t border-cyber-border bg-black/20">
-        <div className="p-2.5 rounded bg-yellow-500/10 border border-yellow-500/30 text-center">
-          <div className="text-[10px] font-mono font-bold text-yellow-400 uppercase tracking-wider">
-            TOP SECRET // NTRO // COMINT
-          </div>
-          <div className="text-[9px] text-yellow-300/80 font-mono mt-0.5">
-            Classified Attribution Platform
+      {/* Mobile Slide-Over Drawer */}
+      {store.mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm md:hidden flex animate-in fade-in duration-200"
+          onClick={() => store.setMobileMenuOpen(false)}
+        >
+          <div
+            className="w-72 max-w-[85vw] bg-[#111827] border-r border-cyan-500/40 h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-200 select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-800">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                  <span className="font-mono font-bold text-white text-sm tracking-wider">
+                    SENTINEL<span className="text-cyan-400">-X</span>
+                  </span>
+                </div>
+                <button
+                  onClick={() => store.setMobileMenuOpen(false)}
+                  className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              {navContent(true)}
+            </div>
+            {footerClassification}
           </div>
         </div>
-      </div>
-    </aside>
+      )}
+    </>
   );
 };
 
 export default Sidebar;
-

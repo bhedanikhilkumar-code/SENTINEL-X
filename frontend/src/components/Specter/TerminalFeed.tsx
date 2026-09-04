@@ -122,8 +122,8 @@ export function TerminalFeed({
   }, [logs, isPaused]);
 
   return (
-    <div className="w-full bg-[#05080f]/95 border-t border-[rgba(0,240,255,0.18)] px-4 py-2 flex items-center justify-between text-xs font-mono select-none">
-      <div className="flex items-center space-x-2.5 shrink-0 pr-4 border-r border-slate-800">
+    <div className="w-full bg-[#05080f]/95 border-t border-[rgba(0,240,255,0.18)] px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between text-xs font-mono select-none">
+      <div className="flex items-center space-x-1.5 sm:space-x-2.5 shrink-0 pr-2 sm:pr-4 border-r border-slate-800">
         <Terminal className="w-4 h-4 text-cyan-400 animate-pulse" />
         <span className="font-bold text-cyan-300 text-[11px] tracking-wider uppercase hidden sm:inline">
           NTRO CORRELATION STREAM:
@@ -135,16 +135,16 @@ export function TerminalFeed({
               : "bg-amber-950 text-amber-400 border border-amber-800"
           }`}
         >
-          ● {wsConnected ? "LIVE WS" : "BUFFERED"}
+          ● {wsConnected ? "LIVE" : "BUFFERED"}
         </span>
       </div>
 
       {/* Scrolling Console Ticker */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-x-auto px-4 overflow-y-hidden whitespace-nowrap scrollbar-none flex items-center"
+        className="flex-1 overflow-x-auto px-2 sm:px-4 overflow-y-hidden whitespace-nowrap scrollbar-none flex items-center"
       >
-        <div className="flex items-center space-x-4 text-[11px]">
+        <div className="flex items-center space-x-3 sm:space-x-4 text-[10.5px] sm:text-[11px]">
           {logs.slice(-5).map((log, idx) => {
             const isAlert = log.includes("[ALERT]") || log.includes("[DE-CLOAK]");
             const isCrypto = log.includes("[CRYPTO]");
@@ -167,7 +167,7 @@ export function TerminalFeed({
       </div>
 
       {/* Controls */}
-      <div className="flex items-center space-x-2 shrink-0 pl-4 border-l border-slate-800 text-[10px]">
+      <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0 pl-2 sm:pl-4 border-l border-slate-800 text-[10px]">
         <button
           onClick={() => setIsPaused(!isPaused)}
           className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 transition"

@@ -69,17 +69,17 @@ const MainLayout: React.FC = () => {
             <Route
               path="/stylometry"
               element={
-                <div className="p-8 space-y-8 max-w-7xl mx-auto">
+                <div className="p-3 sm:p-6 md:p-8 space-y-4 sm:space-y-8 max-w-7xl mx-auto">
                   <div>
-                    <h1 className="text-2xl font-bold text-white tracking-wide">
+                    <h1 className="text-lg sm:text-2xl font-bold text-white tracking-wide">
                       Stylometric & Linguistic Forensics (Module C)
                     </h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-400 mt-1">
                       SBERT 384-dimensional vector embeddings, Jensen-Shannon divergence, n-gram lexical analysis, and diurnal posting timestamps.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     <StyleRadar />
                     <TimezoneHistogram />
                   </div>
@@ -92,12 +92,12 @@ const MainLayout: React.FC = () => {
             <Route
               path="/crypto"
               element={
-                <div className="p-8 space-y-8 max-w-7xl mx-auto">
+                <div className="p-3 sm:p-6 md:p-8 space-y-4 sm:space-y-8 max-w-7xl mx-auto">
                   <div>
-                    <h1 className="text-2xl font-bold text-white tracking-wide">
+                    <h1 className="text-lg sm:text-2xl font-bold text-white tracking-wide">
                       Cryptocurrency Flow & Multi-Hop Blockchain Tracer (Module D)
                     </h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-400 mt-1">
                       Autonomous UTXO peel-chain unraveling, CoinJoin mixer taint analysis, and KYC exchange deposit clustering.
                     </p>
                   </div>
@@ -113,16 +113,16 @@ const MainLayout: React.FC = () => {
             <Route
               path="/map"
               element={
-                <div className="p-6 h-full flex flex-col gap-4">
+                <div className="p-3 sm:p-6 h-full flex flex-col gap-3 sm:gap-4">
                   <div>
-                    <h1 className="text-xl font-bold text-white tracking-wide">
+                    <h1 className="text-lg sm:text-xl font-bold text-white tracking-wide">
                       Geospatial & Threat Actor Infrastructure Map
                     </h1>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-[11px] sm:text-xs text-slate-400">
                       Correlating inferred timezone peaks (UTC+05:30), clearnet IP clusters, telecom ASNs, and server nodes.
                     </p>
                   </div>
-                  <div className="flex-1 min-h-[650px] bg-slate-900/40 rounded-2xl border border-slate-800 p-2 overflow-hidden shadow-2xl">
+                  <div className="flex-1 min-h-[420px] sm:min-h-[650px] bg-slate-900/40 rounded-2xl border border-slate-800 p-2 overflow-hidden shadow-2xl">
                     <GeoMap />
                   </div>
                 </div>
@@ -132,12 +132,12 @@ const MainLayout: React.FC = () => {
             <Route
               path="/timeline"
               element={
-                <div className="p-8 max-w-6xl mx-auto space-y-6">
+                <div className="p-3 sm:p-6 md:p-8 max-w-6xl mx-auto space-y-4 sm:space-y-6">
                   <div>
-                    <h1 className="text-2xl font-bold text-white tracking-wide">
+                    <h1 className="text-lg sm:text-2xl font-bold text-white tracking-wide">
                       De-Anonymization Chronology & Event Reconstruction
                     </h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-400 mt-1">
                       Unified temporal mapping linking forum posts, BTC ransomware extortion transactions, and clearnet footprint events.
                     </p>
                   </div>

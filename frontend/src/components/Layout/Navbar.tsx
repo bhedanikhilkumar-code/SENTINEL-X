@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Radio, UserCheck, LogOut, Bell, X, AlertTriangle, CheckCircle, Server, Link2, Loader2, Check } from 'lucide-react';
+import { Shield, Radio, UserCheck, LogOut, Bell, X, AlertTriangle, CheckCircle, Server, Link2, Loader2, Check, Menu } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useStore } from '../../store/useStore';
 import { api, getBackendUrl, setBackendUrl } from '../../config/api';
@@ -22,7 +22,7 @@ function decodeJwt(token: string) {
 }
 
 export const Navbar: React.FC = () => {
-  const { user, logout, alerts } = useStore();
+  const { user, logout, alerts, mobileMenuOpen, setMobileMenuOpen } = useStore();
   const [torOnline, setTorOnline] = useState(true);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [showTunnelModal, setShowTunnelModal] = useState(false);
@@ -130,21 +130,30 @@ export const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="h-16 bg-[#111827] border-b border-cyber-border flex items-center justify-between px-6 z-40 sticky top-0 select-none">
-      {/* Platform Branding */}
-      <div className="flex items-center space-x-4">
+    <header className="h-14 sm:h-16 bg-[#111827] border-b border-cyber-border flex items-center justify-between px-3 sm:px-6 z-40 sticky top-0 select-none">
+      {/* Left: Mobile Hamburger & Platform Branding */}
+      <div className="flex items-center space-x-2 sm:space-x-4">
+        {/* Mobile Hamburger Button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-1.5 rounded-lg bg-slate-900 border border-slate-700 md:hidden text-cyan-400 hover:text-white cursor-pointer transition"
+          title="Toggle Navigation Menu"
+        >
+          <Menu className="w-4 h-4" />
+        </button>
+
         <div className="flex items-center space-x-2">
-          <div className="w-9 h-9 rounded bg-cyan-500/10 border border-cyan-500/50 flex items-center justify-center shadow-glow-cyan">
-            <Shield className="w-5 h-5 text-cyan-400" />
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded bg-cyan-500/10 border border-cyan-500/50 flex items-center justify-center shadow-glow-cyan">
+            <Shield className="w-4 h-4 text-cyan-400" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-mono font-bold text-lg tracking-wider text-white">SENTINEL-X</span>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                NTRO SIH26151
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <span className="font-mono font-bold text-sm sm:text-lg tracking-wider text-white">SENTINEL-X</span>
+              <span className="text-[9px] sm:text-[10px] uppercase font-mono px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                NTRO
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-mono tracking-tight">
+            <p className="text-[10px] text-slate-400 font-mono tracking-tight hidden lg:block">
               Dark Web Threat Actor De-Anonymization Platform
             </p>
           </div>
@@ -152,22 +161,23 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* Center Operational Status */}
-      <div className="hidden md:flex items-center space-x-3">
+      <div className="flex items-center space-x-1.5 sm:space-x-3">
         {/* Backend / Cloudflare Tunnel Connection Badge */}
         <button
           onClick={() => setShowTunnelModal(true)}
-          className="flex items-center space-x-2 px-3 py-1 rounded bg-black/40 border border-cyber-border hover:border-cyan-500/50 text-xs font-mono transition cursor-pointer"
+          className="flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1 rounded bg-black/40 border border-cyber-border hover:border-cyan-500/50 text-[11px] sm:text-xs font-mono transition cursor-pointer"
           title="Click to configure Cloudflare Tunnel backend connection"
         >
           <Server className={`w-3.5 h-3.5 ${backendStatus === 'online' ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}`} />
-          <span className="text-slate-300 hidden lg:inline">BACKEND:</span>
+          <span className="text-slate-300 hidden md:inline">BACKEND:</span>
           <span className={backendStatus === 'online' ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-semibold'}>
-            {backendStatus === 'online' ? 'LIVE TUNNEL' : 'LINK TUNNEL'}
+            <span className="hidden sm:inline">{backendStatus === 'online' ? 'LIVE TUNNEL' : 'LINK TUNNEL'}</span>
+            <span className="sm:hidden">{backendStatus === 'online' ? 'LIVE' : 'LINK'}</span>
           </span>
         </button>
 
         {/* CHECK 17: Tor Collector Status Badge */}
-        <div className="flex items-center space-x-2 px-3 py-1 rounded bg-black/40 border border-cyber-border text-xs font-mono">
+        <div className="hidden sm:flex items-center space-x-2 px-2.5 sm:px-3 py-1 rounded bg-black/40 border border-cyber-border text-[11px] sm:text-xs font-mono">
           <span className="relative flex h-2 w-2">
             <span
               className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
@@ -188,25 +198,25 @@ export const Navbar: React.FC = () => {
         {/* CHECK 18: Live Feed Alert Badge with Clickable Drawer */}
         <button
           onClick={() => setShowAlertModal(true)}
-          className="flex items-center space-x-2 px-3 py-1 rounded bg-black/40 border border-cyber-border hover:border-cyan-500/50 text-xs font-mono transition cursor-pointer"
+          className="flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1 rounded bg-black/40 border border-cyber-border hover:border-cyan-500/50 text-[11px] sm:text-xs font-mono transition cursor-pointer"
           title="Click to view live alerts"
         >
           <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-          <span className="text-slate-300">LIVE FEED:</span>
-          <span className="text-cyan-400 font-semibold">{currentAlerts.length} ALERTS</span>
+          <span className="text-slate-300 hidden md:inline">LIVE:</span>
+          <span className="text-cyan-400 font-semibold">{currentAlerts.length}</span>
         </button>
       </div>
 
       {/* User / Authentication Badge (CHECK 19 & CHECK 20) */}
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-3 pl-3 border-l border-cyber-border">
-          <div className="text-right">
+      <div className="flex items-center space-x-2 sm:space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-3 pl-2 sm:pl-3 border-l border-cyber-border">
+          <div className="text-right hidden sm:block">
             <div className="text-xs font-medium text-white flex items-center justify-end space-x-1">
               <UserCheck className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{displayName}</span>
+              <span className="truncate max-w-[100px]">{displayName}</span>
             </div>
             <span
-              className={`inline-block text-[10px] uppercase font-mono px-1.5 py-0.2 rounded border ${getRoleBadge(
+              className={`inline-block text-[9px] sm:text-[10px] uppercase font-mono px-1.5 py-0.2 rounded border ${getRoleBadge(
                 userRole
               )}`}
             >
@@ -217,7 +227,7 @@ export const Navbar: React.FC = () => {
           <button
             onClick={handleLogout}
             title="Disconnect Session (Logout)"
-            className="p-2 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-colors"
+            className="p-1.5 sm:p-2 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
           </button>

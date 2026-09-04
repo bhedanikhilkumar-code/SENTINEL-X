@@ -47,31 +47,34 @@ export function SpecterWorkbenchPage() {
       {/* ========================================================================= */}
       {/* TOP HEADER: DEFENSE INTELLIGENCE APPARATUS */}
       {/* ========================================================================= */}
-      <header className="px-5 py-2.5 bg-[#0b1220]/95 backdrop-blur-xl border-b border-[rgba(0,240,255,0.18)] flex items-center justify-between shadow-cyber-glow shrink-0 z-20">
+      {/* ========================================================================= */}
+      {/* TOP HEADER: DEFENSE INTELLIGENCE APPARATUS */}
+      {/* ========================================================================= */}
+      <header className="px-3 sm:px-5 py-2 sm:py-2.5 bg-[#0b1220]/95 backdrop-blur-xl border-b border-[rgba(0,240,255,0.18)] flex items-center justify-between shadow-cyber-glow shrink-0 z-20">
         {/* Brand & Sponsoring Agency */}
-        <div className="flex items-center space-x-3.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/30 border border-cyan-400/60 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.3)]">
-            <ShieldAlert className="w-5 h-5 text-cyan-400 animate-pulse" />
+        <div className="flex items-center space-x-2.5 sm:space-x-3.5">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/30 border border-cyan-400/60 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.3)] shrink-0">
+            <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400 animate-pulse" />
           </div>
           <div>
-            <div className="flex items-center space-x-2 font-mono">
-              <span className="font-black text-base tracking-widest text-slate-100 uppercase">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 font-mono">
+              <span className="font-black text-sm sm:text-base tracking-widest text-slate-100 uppercase">
                 SPECTER<span className="text-cyan-400">-TRACE</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-red-950/90 text-red-400 border border-red-800 font-bold uppercase tracking-wider">
-                RESTRICTED // NTRO
+              <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded bg-red-950/90 text-red-400 border border-red-800 font-bold uppercase tracking-wider">
+                RESTRICTED
               </span>
             </div>
-            <div className="text-[11px] font-mono text-slate-400 flex items-center space-x-2">
+            <div className="text-[10px] sm:text-[11px] font-mono text-slate-400 flex items-center space-x-1.5 sm:space-x-2">
               <span className="text-cyan-400 font-bold">SIH26151</span>
-              <span>•</span>
-              <span className="text-slate-300">National Cyber Threat Actor Attribution Workbench</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="hidden sm:inline text-slate-300">National Cyber Threat Attribution</span>
             </div>
           </div>
         </div>
 
         {/* Target Badge & Live Threat Status */}
-        <div className="hidden md:flex items-center space-x-4 px-4 py-1.5 rounded-xl bg-[#0e172a]/90 border border-slate-800 font-mono text-xs">
+        <div className="hidden xl:flex items-center space-x-4 px-4 py-1.5 rounded-xl bg-[#0e172a]/90 border border-slate-800 font-mono text-xs">
           <div className="flex items-center space-x-2">
             <span className="text-slate-400">ACTIVE TARGET:</span>
             <span className="text-cyan-300 font-black tracking-wider">
@@ -91,10 +94,10 @@ export function SpecterWorkbenchPage() {
         </div>
 
         {/* Quick Actions (CHECK 9 Audit Chain + CHECK 10 Legal Dossier) */}
-        <div className="flex items-center space-x-2 font-mono text-xs">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 font-mono text-xs shrink-0">
           <button
             onClick={() => setIsAuditModalOpen(true)}
-            className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center space-x-1.5 transition"
+            className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center space-x-1 sm:space-x-1.5 transition text-[11px] sm:text-xs cursor-pointer"
             title="Inspect Merkle Audit Chain"
           >
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
@@ -103,11 +106,12 @@ export function SpecterWorkbenchPage() {
 
           <button
             onClick={handleTriggerPdf}
-            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-slate-950 font-black uppercase tracking-wider transition shadow-emerald-glow flex items-center space-x-1.5"
+            className="px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-slate-950 font-black uppercase tracking-wider transition shadow-emerald-glow flex items-center space-x-1 sm:space-x-1.5 text-[11px] sm:text-xs cursor-pointer"
             title="Generate and download Section 65B PDF Dossier"
           >
-            <FileText className="w-4 h-4" />
-            <span>Legal Dossier</span>
+            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Legal Dossier</span>
+            <span className="sm:hidden">Dossier</span>
           </button>
         </div>
       </header>
@@ -115,9 +119,9 @@ export function SpecterWorkbenchPage() {
       {/* ========================================================================= */}
       {/* 4-ZONE MAIN WORKBENCH GRID */}
       {/* ========================================================================= */}
-      <main className="flex-1 min-h-0 p-3.5 grid grid-cols-1 lg:grid-cols-12 gap-3.5 overflow-y-auto">
+      <main className="flex-1 min-h-0 p-2 sm:p-3.5 grid grid-cols-1 lg:grid-cols-12 gap-2.5 sm:gap-3.5 overflow-y-auto">
         {/* ZONE 1: SUSPECT DOSSIER & PROFILE (3 Cols) */}
-        <section className="lg:col-span-3 h-full min-h-[580px]">
+        <section className="lg:col-span-3 h-auto lg:h-full min-h-0 lg:min-h-[580px]">
           <ActorProfile
             actor={currentActor}
             onSelectActor={handleSelectActor}
@@ -126,44 +130,46 @@ export function SpecterWorkbenchPage() {
         </section>
 
         {/* CENTER COLUMN: ZONE 2 (GRAPH/MAP) + TOR CIRCUIT + STYLOMETRY (6 Cols) */}
-        <section className="lg:col-span-6 flex flex-col space-y-3 h-full min-h-[580px]">
+        <section className="lg:col-span-6 flex flex-col space-y-2.5 sm:space-y-3 h-auto lg:h-full min-h-0 lg:min-h-[580px]">
           {/* View Switcher: Leaflet Map vs Cytoscape Graph (CHECK 4) */}
-          <div className="flex items-center justify-between bg-[#0b0f19] px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-xs">
-            <div className="flex items-center space-x-2">
-              <span className="text-slate-400 text-[11px] font-bold">INTELLIGENCE VIEW:</span>
+          <div className="flex flex-wrap items-center justify-between gap-2 bg-[#0b0f19] px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-xs">
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <span className="text-slate-400 text-[10px] sm:text-[11px] font-bold">VIEW:</span>
               <div className="flex items-center space-x-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800">
                 <button
                   onClick={() => setCenterTab("graph")}
-                  className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center space-x-1.5 transition ${
+                  className={`px-2 sm:px-3 py-1 rounded-md text-[10px] sm:text-[11px] font-bold flex items-center space-x-1 sm:space-x-1.5 transition cursor-pointer ${
                     centerTab === "graph"
                       ? "bg-cyan-950 text-cyan-400 border border-cyan-700 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Knowledge Graph (Module E)</span>
+                  <Share2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span className="hidden sm:inline">Knowledge Graph (Module E)</span>
+                  <span className="sm:hidden">Graph</span>
                 </button>
                 <button
                   onClick={() => setCenterTab("map")}
-                  className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center space-x-1.5 transition ${
+                  className={`px-2 sm:px-3 py-1 rounded-md text-[10px] sm:text-[11px] font-bold flex items-center space-x-1 sm:space-x-1.5 transition cursor-pointer ${
                     centerTab === "map"
                       ? "bg-cyan-950 text-cyan-400 border border-cyan-700 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  <Globe2 className="w-3.5 h-3.5" />
-                  <span>Leaflet 2D Geo Map</span>
+                  <Globe2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span className="hidden sm:inline">Leaflet 2D Geo Map</span>
+                  <span className="sm:hidden">Geo Map</span>
                 </button>
               </div>
             </div>
 
-            <div className="text-[10px] text-slate-400 font-mono hidden sm:block">
+            <div className="text-[10px] text-slate-400 font-mono hidden md:block">
               Target: <b className="text-cyan-400">{currentActor.codename}</b>
             </div>
           </div>
 
           {/* ZONE 2: RENDER CYTOSCAPE GRAPH OR LEAFLET MAP (CHECK 1, 2, 3, 4) */}
-          <div className="flex-1 min-h-[360px]">
+          <div className="flex-1 min-h-[320px] sm:min-h-[360px] h-[350px] sm:h-auto">
             {centerTab === "graph" ? (
               <KnowledgeGraph actorId={currentActor.id} caseId={caseId} />
             ) : (
@@ -177,13 +183,13 @@ export function SpecterWorkbenchPage() {
           </div>
 
           {/* ZONE 4: AI STYLOMETRY & AUTHORSHIP RADAR */}
-          <div className="h-64 shrink-0">
+          <div className="h-60 sm:h-64 shrink-0">
             <StylometryRadar actor={currentActor} />
           </div>
         </section>
 
         {/* ZONE 3: DIGITAL FORENSIC EVIDENCE LOCKER (3 Cols) (CHECK 5, 6, 7) */}
-        <section className="lg:col-span-3 h-full min-h-[580px]">
+        <section className="lg:col-span-3 h-auto lg:h-full min-h-0 lg:min-h-[580px]">
           <ForensicEvidenceTabs
             actor={currentActor}
             caseId={caseId}

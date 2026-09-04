@@ -28,6 +28,8 @@ interface AppState {
   setActiveTab: (tab: string) => void;
   currentView: string;
   setCurrentView: (view: string) => void;
+  mobileMenuOpen: boolean;
+  setMobileMenuOpen: (open: boolean) => void;
 
   // Active case
   selectedCaseId: string | null;
@@ -72,6 +74,8 @@ export const useStore = create<AppState>((set) => ({
   currentView: 'cases',
   setActiveTab: (tab) => set({ activeTab: tab, currentView: tab }),
   setCurrentView: (view) => set({ currentView: view, activeTab: view }),
+  mobileMenuOpen: false,
+  setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
 
   selectedCaseId: 'case-phantom-krypt-01',
   activeCaseId: 'case-phantom-krypt-01',

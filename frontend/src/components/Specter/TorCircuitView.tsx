@@ -66,39 +66,39 @@ export function TorCircuitView({
   ];
 
   return (
-    <div className="w-full bg-[#0b0f19] border border-cyan-500/20 rounded-2xl p-3.5 shadow-cyber-glow select-none font-mono text-xs">
+    <div className="w-full bg-[#0b0f19] border border-cyan-500/20 rounded-2xl p-2.5 sm:p-3.5 shadow-cyber-glow select-none font-mono text-xs">
       {/* Circuit Header Bar */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2 mb-3">
         <div className="flex items-center space-x-2">
           <div className="relative flex items-center justify-center">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping absolute"></span>
             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
           </div>
-          <span className="font-bold text-slate-100 uppercase tracking-wider text-[11px]">
-            Tor Onion Circuit Topology
+          <span className="font-bold text-slate-100 uppercase tracking-wider text-[10px] sm:text-[11px]">
+            Tor Circuit Topology
           </span>
-          <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
-            ACTIVE CIRCUIT
+          <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
+            ACTIVE
           </span>
         </div>
 
-        <div className="flex items-center space-x-3 text-[10px] text-slate-400">
+        <div className="flex items-center flex-wrap gap-2 text-[9px] sm:text-[10px] text-slate-400">
           <div>
             Latency: <b className="text-cyan-400">{latency}</b>
           </div>
           <span>•</span>
           <div>
-            Circuit ID: <b className="text-amber-400">{circuitId}</b>
+            Circuit: <b className="text-amber-400">{circuitId}</b>
           </div>
-          <span>•</span>
-          <div>
+          <span className="hidden sm:inline">•</span>
+          <div className="hidden sm:block">
             Hops: <b className="text-purple-400">{hops} Nodes</b>
           </div>
         </div>
       </div>
 
       {/* 4-Box Animated Pipeline Flow (CHECK 8: CSS Animated Connectors + Click to show details) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 items-center relative">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 items-center relative">
         {nodes.map((node, idx) => {
           const Icon = node.icon;
           const isSelected = selectedHop === node.id;
