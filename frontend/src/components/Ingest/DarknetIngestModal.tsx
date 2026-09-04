@@ -156,7 +156,7 @@ Telegram: @vl_operator`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-200">
       <div
         className="w-full max-w-3xl max-h-[95vh] bg-[#0a0f1d] border border-cyan-500/40 rounded-2xl shadow-2xl overflow-hidden font-sans select-none flex flex-col"
         onClick={(e) => e.stopPropagation()}

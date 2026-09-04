@@ -310,7 +310,7 @@ export function KnowledgeGraph({ actorId = "phantom-krypt", caseId = "1" }: Know
   }
 
   return (
-    <div className="relative w-full h-full min-h-[380px] bg-[#070a13] rounded-2xl border border-[rgba(0,240,255,0.2)] overflow-hidden shadow-cyber-glow">
+    <div className="relative isolate z-0 w-full h-full min-h-[380px] bg-[#070a13] rounded-2xl border border-[rgba(0,240,255,0.2)] overflow-hidden shadow-cyber-glow">
       {/* Top Header Badge */}
       <div className="absolute top-2.5 sm:top-3 left-2 sm:left-3 z-10 flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[11px] sm:text-xs font-mono">
         <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse shrink-0" />

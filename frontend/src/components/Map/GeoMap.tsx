@@ -382,11 +382,11 @@ export const GeoMap: React.FC = () => {
       </div>
 
       {/* Map Viewport Container */}
-      <div className="relative flex-1 w-full min-h-[440px] rounded-xl border border-cyan-500/20 overflow-hidden bg-[#070a13] shadow-inner">
+      <div className="relative isolate z-0 flex-1 w-full min-h-[440px] rounded-xl border border-cyan-500/20 overflow-hidden bg-[#070a13] shadow-inner">
         <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
         {/* Floating Quick Legend */}
-        <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 z-[400] bg-[#0b1322]/90 backdrop-blur-md px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-slate-800 text-[9px] sm:text-[10px] font-mono shadow-xl flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 z-10 bg-[#0b1322]/90 backdrop-blur-md px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-slate-800 text-[9px] sm:text-[10px] font-mono shadow-xl flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center space-x-1.5">
             <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 bg-red-500 rounded-full inline-block shadow-[0_0_8px_#ef4444]"></span>
             <span className="text-red-300 font-bold">De-cloaked Origin</span>
@@ -406,7 +406,7 @@ export const GeoMap: React.FC = () => {
         </div>
 
         {/* Floating Status Pill */}
-        <div className="absolute top-2 sm:top-3 right-2 sm:right-3 z-[400] bg-[#0b1322]/90 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-lg border border-slate-800 text-[9px] sm:text-[10px] font-mono text-slate-300 flex items-center space-x-1 sm:space-x-1.5">
+        <div className="absolute top-2 sm:top-3 right-2 sm:right-3 z-10 bg-[#0b1322]/90 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-lg border border-slate-800 text-[9px] sm:text-[10px] font-mono text-slate-300 flex items-center space-x-1 sm:space-x-1.5">
           <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
           <span>Target: <strong className="text-cyan-400 uppercase">{selectedTarget}</strong></span>
         </div>

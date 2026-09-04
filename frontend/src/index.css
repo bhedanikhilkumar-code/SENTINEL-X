@@ -66,3 +66,19 @@
   z-index: 2;
   pointer-events: none;
 }
+
+/* Isolate Leaflet stacking context so map tiles and controls never overlay modals or drawers */
+.leaflet-container {
+  isolation: isolate !important;
+  z-index: 0 !important;
+}
+
+.leaflet-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 5 !important;
+}
+

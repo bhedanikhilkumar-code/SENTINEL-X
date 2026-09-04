@@ -208,7 +208,7 @@ The suspect relies on a 3-hop Tor SOCKS5 circuit exiting in Western Europe, but 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         className="w-full max-w-2xl h-full bg-[#080d1a] border-l border-cyan-500/40 shadow-2xl flex flex-col justify-between font-sans select-none animate-in slide-in-from-right duration-200"
         onClick={(e) => e.stopPropagation()}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Shield, Radio, UserCheck, LogOut, Bell, X, AlertTriangle, CheckCircle, Server, Link2, Loader2, Check, Menu, Download, Sparkles, UploadCloud, Scale } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useStore } from '../../store/useStore';
@@ -25,6 +26,7 @@ function decodeJwt(token: string) {
 }
 
 export const Navbar: React.FC = () => {
+  const navigate = useNavigate();
   const store = useStore();
   const { user, logout, alerts, mobileMenuOpen, setMobileMenuOpen } = store;
   const [torOnline, setTorOnline] = useState(true);
@@ -306,7 +308,7 @@ export const Navbar: React.FC = () => {
 
       {/* Cloudflare Tunnel Modal */}
       {showTunnelModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#0e1626] border border-cyan-500/40 rounded-2xl p-6 max-w-lg w-full font-mono text-xs shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
@@ -373,7 +375,7 @@ export const Navbar: React.FC = () => {
 
       {/* CHECK 18: Live Alerts Slide-Over Modal */}
       {showAlertModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex justify-end">
+        <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex justify-end">
           <div className="w-96 bg-[#0e1626] border-l border-cyan-500/30 h-full p-5 font-mono text-xs flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-200">
             <div>
               <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -435,13 +437,16 @@ export const Navbar: React.FC = () => {
             setShowSubpoenaModal(true);
             store.setIsSubpoenaOpen(true);
           } else if (actionId === 'view_crypto') {
-            window.location.href = '/crypto';
+            navigate('/crypto');
           } else if (actionId === 'view_map') {
-            window.location.href = '/map';
+            window.dispatchEvent(new CustomEvent('sentinel:switch-tab', { detail: 'map' }));
+            if (window.location.pathname !== '/graph' && window.location.pathname !== '/') {
+              navigate('/graph');
+            }
           } else if (actionId === 'export_pdf') {
-            window.location.href = '/dossier';
+            window.dispatchEvent(new CustomEvent('sentinel:trigger-pdf'));
           } else if (actionId === 'view_stylometry') {
-            window.location.href = '/stylometry';
+            navigate('/stylometry');
           }
         }}
       />

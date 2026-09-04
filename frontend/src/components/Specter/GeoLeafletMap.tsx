@@ -190,8 +190,8 @@ export function GeoLeafletMap({ actorId = "phantom-krypt" }: GeoLeafletMapProps)
   }, [actorId]);
 
   return (
-    <div className="relative w-full h-full min-h-[380px] bg-[#070a13] rounded-2xl border border-cyan-500/20 overflow-hidden shadow-cyber-glow">
-      <div className="absolute top-2.5 sm:top-3 left-2 sm:left-3 z-[400] flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[11px] sm:text-xs font-mono">
+    <div className="relative isolate z-0 w-full h-full min-h-[380px] bg-[#070a13] rounded-2xl border border-cyan-500/20 overflow-hidden shadow-cyber-glow">
+      <div className="absolute top-2.5 sm:top-3 left-2 sm:left-3 z-10 flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[11px] sm:text-xs font-mono">
         <Globe2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse shrink-0" />
         <span className="font-bold text-slate-100 hidden sm:inline">GEOSPATIAL THREAT TRACE</span>
         <span className="font-bold text-slate-100 sm:hidden">GEO TRACE</span>
@@ -203,7 +203,7 @@ export function GeoLeafletMap({ actorId = "phantom-krypt" }: GeoLeafletMapProps)
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
       {/* Map Legend */}
-      <div className="absolute bottom-2.5 sm:bottom-3 left-2 sm:left-3 z-[400] flex flex-wrap items-center gap-1.5 sm:gap-3 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[9px] sm:text-[10px] font-mono">
+      <div className="absolute bottom-2.5 sm:bottom-3 left-2 sm:left-3 z-10 flex flex-wrap items-center gap-1.5 sm:gap-3 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[9px] sm:text-[10px] font-mono">
         <div className="flex items-center space-x-1">
           <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
           <span className="text-slate-300">Guard</span>
