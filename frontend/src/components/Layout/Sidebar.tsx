@@ -12,6 +12,9 @@ import {
   Clock,
   X,
   Download,
+  Sparkles,
+  UploadCloud,
+  Scale,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
@@ -80,6 +83,48 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
           );
         })}
       </nav>
+
+      {/* Mobile-Only Quick Intelligence Tools */}
+      {isMobile && (
+        <div className="mt-4 pt-3 border-t border-slate-800/80 px-3 space-y-1.5">
+          <div className="px-3 mb-2 text-[9px] font-mono tracking-widest text-cyan-400 uppercase font-bold">
+            Intelligence Tools
+          </div>
+
+          <button
+            onClick={() => {
+              store.setIsAiCopilotOpen(true);
+              store.setMobileMenuOpen(false);
+            }}
+            className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-mono bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-500/30 text-cyan-300 transition cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
+            <span>SPECTER-AI Copilot</span>
+          </button>
+
+          <button
+            onClick={() => {
+              store.setIsIngestOpen(true);
+              store.setMobileMenuOpen(false);
+            }}
+            className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-mono bg-purple-950/40 hover:bg-purple-900/50 border border-purple-500/30 text-purple-300 transition cursor-pointer"
+          >
+            <UploadCloud className="w-4 h-4 text-purple-400" />
+            <span>Darknet Leak Ingest</span>
+          </button>
+
+          <button
+            onClick={() => {
+              store.setIsSubpoenaOpen(true);
+              store.setMobileMenuOpen(false);
+            }}
+            className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-mono bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/30 text-emerald-300 transition cursor-pointer"
+          >
+            <Scale className="w-4 h-4 text-emerald-400" />
+            <span>Court Subpoena (Sec 91)</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 

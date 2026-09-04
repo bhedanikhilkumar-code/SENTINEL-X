@@ -49,13 +49,13 @@ const MainLayout: React.FC = () => {
   }, [activeCaseId, selectedCaseId]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0b0f19] text-slate-100 font-sans">
+    <div className="flex flex-col h-screen h-[100dvh] w-full max-w-[100vw] overflow-hidden bg-[#0b0f19] text-slate-100 font-sans">
       <Navbar />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden min-h-0">
         <Sidebar />
 
-        <main className="flex-1 overflow-y-auto bg-[#0b0f19] relative flex flex-col min-h-0">
+        <main className="flex-1 overflow-y-auto bg-[#0b0f19] relative flex flex-col min-h-0 overscroll-contain">
           <Routes>
             {/* CHECK 13: All routes defined in App.tsx react-router-dom */}
             <Route path="/" element={<Navigate to="/graph" replace />} />

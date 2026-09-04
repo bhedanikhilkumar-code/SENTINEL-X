@@ -163,27 +163,27 @@ ${ioName}`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 animate-in fade-in duration-200">
       <div
-        className="w-full max-w-4xl bg-[#090e1c] border border-cyan-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-sans select-none animate-in zoom-in-95 duration-200"
+        className="w-full max-w-4xl max-h-[95vh] bg-[#090e1c] border border-cyan-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-sans select-none animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 bg-[#0d162a] border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500/20 to-emerald-600/30 border border-cyan-400 flex items-center justify-center shadow-glow-cyan">
-              <Scale className="w-5 h-5 text-cyan-400" />
+        <div className="px-3.5 sm:px-6 py-3 sm:py-4 bg-[#0d162a] border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center space-x-2.5 sm:space-x-3">
+            <div className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl bg-gradient-to-br from-cyan-500/20 to-emerald-600/30 border border-cyan-400 flex items-center justify-center shadow-glow-cyan shrink-0">
+              <Scale className="w-4 sm:w-5 h-4 sm:h-5 text-cyan-400" />
             </div>
             <div>
-              <div className="flex items-center space-x-2 font-mono">
-                <span className="font-bold text-white text-sm tracking-wider">
-                  SECTION 91 CrPC / BSA 2023 SUBPOENA GENERATOR
+              <div className="flex items-center space-x-1.5 sm:space-x-2 font-mono">
+                <span className="font-bold text-white text-xs sm:text-sm tracking-wider">
+                  SECTION 91 CrPC / BSA 2023 SUBPOENA
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
                   COURT ADMISSIBLE
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">
+              <p className="text-[10px] sm:text-xs text-slate-400 font-mono mt-0.5 hidden sm:block">
                 Generate formal statutory preservation orders and exchange freezing notices with digital custody certification
               </p>
             </div>
@@ -193,12 +193,12 @@ ${ioName}`;
             onClick={onClose}
             className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* Notice Type Selector Tabs */}
-        <div className="px-6 pt-4 pb-2 bg-[#070b16] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div className="px-3 sm:px-6 pt-2.5 sm:pt-4 pb-2 bg-[#070b16] border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center space-x-2 font-mono text-xs">
             <button
               onClick={() => setNoticeType('isp')}
@@ -256,9 +256,9 @@ ${ioName}`;
         </div>
 
         {/* Modal Body & Customization Settings */}
-        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto font-mono text-xs">
+        <div className="p-3 sm:p-6 space-y-3 sm:space-y-4 max-h-[70vh] overflow-y-auto font-mono text-xs">
           {/* Metadata inputs */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#060a14] p-3 rounded-xl border border-slate-800">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 bg-[#060a14] p-2.5 sm:p-3 rounded-xl border border-slate-800">
             <div>
               <label className="text-[10px] text-slate-400 uppercase">FIR Case Number</label>
               <input
@@ -289,10 +289,10 @@ ${ioName}`;
           </div>
 
           {/* Legal Notice Document Preview */}
-          <div className="relative bg-[#050811] p-6 rounded-xl border border-slate-800 text-slate-300 shadow-inner overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed text-[11px] select-text">
+          <div className="relative bg-[#050811] p-3.5 sm:p-6 rounded-xl border border-slate-800 text-slate-300 shadow-inner overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed text-[10px] sm:text-[11px] select-text">
             {/* Watermark */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
-              <span className="text-7xl font-bold uppercase tracking-widest text-white rotate-[-30deg]">
+              <span className="text-4xl sm:text-7xl font-bold uppercase tracking-widest text-white rotate-[-30deg]">
                 NTRO CONFIDENTIAL
               </span>
             </div>

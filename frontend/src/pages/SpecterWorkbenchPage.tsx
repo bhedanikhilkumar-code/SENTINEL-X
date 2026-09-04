@@ -35,6 +35,7 @@ export function SpecterWorkbenchPage() {
   const [isAiCopilotOpen, setIsAiCopilotOpen] = useState<boolean>(false);
   const [isSubpoenaOpen, setIsSubpoenaOpen] = useState<boolean>(false);
   const [isIngestOpen, setIsIngestOpen] = useState<boolean>(false);
+  const [mobileActiveZone, setMobileActiveZone] = useState<'graph' | 'dossier' | 'evidence' | 'stylometry' | 'all'>('graph');
 
   const currentActor: ActorData = TARGET_ACTORS[selectedActorId] || TARGET_ACTORS["phantom-krypt"];
   const caseId = selectedActorId === "void-locker" ? "2" : "1";
@@ -53,9 +54,6 @@ export function SpecterWorkbenchPage() {
 
   return (
     <div className="h-full w-full bg-[#070a13] text-slate-200 flex flex-col justify-between font-sans selection:bg-cyan-500 selection:text-black overflow-hidden">
-      {/* ========================================================================= */}
-      {/* TOP HEADER: DEFENSE INTELLIGENCE APPARATUS */}
-      {/* ========================================================================= */}
       {/* ========================================================================= */}
       {/* TOP HEADER: DEFENSE INTELLIGENCE APPARATUS */}
       {/* ========================================================================= */}
@@ -154,11 +152,48 @@ export function SpecterWorkbenchPage() {
       </header>
 
       {/* ========================================================================= */}
+      {/* MOBILE ZONE TABS (Shown on screens < lg) */}
+      {/* ========================================================================= */}
+      <div className="lg:hidden px-2 py-1.5 bg-[#0b1220] border-b border-slate-800 flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink-0 text-xs font-mono">
+        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider pl-1 shrink-0">ZONE:</span>
+        {[
+          { id: 'graph', label: 'Graph & Map', icon: Share2 },
+          { id: 'dossier', label: 'Dossier', icon: ShieldAlert },
+          { id: 'evidence', label: 'Evidence', icon: Layers },
+          { id: 'stylometry', label: 'Stylometry', icon: Sparkles },
+          { id: 'all', label: 'All Zones', icon: Globe2 },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = mobileActiveZone === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setMobileActiveZone(tab.id as any)}
+              className={`px-2.5 py-1 rounded-lg font-bold flex items-center space-x-1 whitespace-nowrap transition cursor-pointer text-[11px] ${
+                isActive
+                  ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
+                  : 'bg-slate-900/70 text-slate-400 border border-slate-800 hover:text-slate-200'
+              }`}
+            >
+              <Icon className="w-3 h-3" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ========================================================================= */}
       {/* 4-ZONE MAIN WORKBENCH GRID */}
       {/* ========================================================================= */}
       <main className="flex-1 min-h-0 p-2 sm:p-3.5 grid grid-cols-1 lg:grid-cols-12 gap-2.5 sm:gap-3.5 overflow-y-auto">
         {/* ZONE 1: SUSPECT DOSSIER & PROFILE (3 Cols) */}
-        <section className="lg:col-span-3 h-auto lg:h-full min-h-0 lg:min-h-[580px]">
+        <section
+          className={`lg:col-span-3 h-auto lg:h-full min-h-0 lg:min-h-[580px] ${
+            mobileActiveZone === 'dossier' || mobileActiveZone === 'all'
+              ? 'block'
+              : 'hidden lg:block'
+          }`}
+        >
           <ActorProfile
             actor={currentActor}
             onSelectActor={handleSelectActor}
@@ -167,9 +202,19 @@ export function SpecterWorkbenchPage() {
         </section>
 
         {/* CENTER COLUMN: ZONE 2 (GRAPH/MAP) + TOR CIRCUIT + STYLOMETRY (6 Cols) */}
-        <section className="lg:col-span-6 flex flex-col space-y-2.5 sm:space-y-3 h-auto lg:h-full min-h-0 lg:min-h-[580px]">
-          {/* View Switcher: Leaflet Map vs Cytoscape Graph (CHECK 4) */}
-          <div className="flex flex-wrap items-center justify-between gap-2 bg-[#0b0f19] px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-xs">
+        <section
+          className={`lg:col-span-6 flex flex-col space-y-2.5 sm:space-y-3 h-auto lg:h-full min-h-0 lg:min-h-[580px] ${
+            mobileActiveZone === 'graph' || mobileActiveZone === 'stylometry' || mobileActiveZone === 'all'
+              ? 'flex'
+              : 'hidden lg:flex'
+          }`}
+        >
+          {/* View Switcher: Leaflet Map vs Cytoscape Graph */}
+          <div
+            className={`flex-wrap items-center justify-between gap-2 bg-[#0b0f19] px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-xs ${
+              mobileActiveZone === 'stylometry' ? 'hidden lg:flex' : 'flex'
+            }`}
+          >
             <div className="flex items-center space-x-1.5 sm:space-x-2">
               <span className="text-slate-400 text-[10px] sm:text-[11px] font-bold">VIEW:</span>
               <div className="flex items-center space-x-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800">
@@ -205,8 +250,14 @@ export function SpecterWorkbenchPage() {
             </div>
           </div>
 
-          {/* ZONE 2: RENDER CYTOSCAPE GRAPH OR LEAFLET MAP (CHECK 1, 2, 3, 4) */}
-          <div className="flex-1 min-h-[320px] sm:min-h-[360px] h-[350px] sm:h-auto">
+          {/* ZONE 2: RENDER CYTOSCAPE GRAPH OR LEAFLET MAP */}
+          <div
+            className={`min-h-[320px] sm:min-h-[360px] h-[350px] sm:h-auto ${
+              mobileActiveZone === 'stylometry'
+                ? 'hidden lg:block lg:flex-1'
+                : 'flex-1'
+            }`}
+          >
             {centerTab === "graph" ? (
               <KnowledgeGraph actorId={currentActor.id} caseId={caseId} />
             ) : (
@@ -214,19 +265,37 @@ export function SpecterWorkbenchPage() {
             )}
           </div>
 
-          {/* TOR CIRCUIT TOPOLOGY PIPELINE (CHECK 8) */}
-          <div className="shrink-0">
+          {/* TOR CIRCUIT TOPOLOGY PIPELINE */}
+          <div
+            className={`shrink-0 ${
+              mobileActiveZone === 'stylometry' ? 'hidden lg:block' : 'block'
+            }`}
+          >
             <TorCircuitView latency="24ms" circuitId="#7A3F" hops={3} />
           </div>
 
           {/* ZONE 4: AI STYLOMETRY & AUTHORSHIP RADAR */}
-          <div className="h-60 sm:h-64 shrink-0">
+          <div
+            className={`shrink-0 ${
+              mobileActiveZone === 'graph'
+                ? 'hidden lg:block h-60 sm:h-64'
+                : mobileActiveZone === 'stylometry'
+                ? 'block h-80 sm:h-72'
+                : 'h-60 sm:h-64'
+            }`}
+          >
             <StylometryRadar actor={currentActor} />
           </div>
         </section>
 
-        {/* ZONE 3: DIGITAL FORENSIC EVIDENCE LOCKER (3 Cols) (CHECK 5, 6, 7) */}
-        <section className="lg:col-span-3 h-auto lg:h-full min-h-0 lg:min-h-[580px]">
+        {/* ZONE 3: DIGITAL FORENSIC EVIDENCE LOCKER (3 Cols) */}
+        <section
+          className={`lg:col-span-3 h-auto lg:h-full min-h-0 lg:min-h-[580px] ${
+            mobileActiveZone === 'evidence' || mobileActiveZone === 'all'
+              ? 'block'
+              : 'hidden lg:block'
+          }`}
+        >
           <ForensicEvidenceTabs
             actor={currentActor}
             caseId={caseId}

@@ -312,55 +312,57 @@ export function KnowledgeGraph({ actorId = "phantom-krypt", caseId = "1" }: Know
   return (
     <div className="relative w-full h-full min-h-[380px] bg-[#070a13] rounded-2xl border border-[rgba(0,240,255,0.2)] overflow-hidden shadow-cyber-glow">
       {/* Top Header Badge */}
-      <div className="absolute top-3 left-3 z-10 flex items-center space-x-2 px-3 py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-xs font-mono">
-        <Share2 className="w-4 h-4 text-cyan-400 animate-pulse" />
-        <span className="font-bold text-slate-100">KNOWLEDGE GRAPH (MODULE E)</span>
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono">
-          ● {usingBackend ? "LIVE NEO4J" : "HYBRID GRAPH"}
+      <div className="absolute top-2.5 sm:top-3 left-2 sm:left-3 z-10 flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[11px] sm:text-xs font-mono">
+        <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse shrink-0" />
+        <span className="font-bold text-slate-100 hidden sm:inline">KNOWLEDGE GRAPH (MODULE E)</span>
+        <span className="font-bold text-slate-100 sm:hidden">MODULE E</span>
+        <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono shrink-0">
+          ● {usingBackend ? "LIVE" : "HYBRID"}
         </span>
-        <span className="text-[10px] text-slate-400 font-mono">
+        <span className="text-[10px] text-slate-400 font-mono hidden md:inline">
           {graphData?.nodes?.length || 0} nodes · {graphData?.edges?.length || 0} edges
         </span>
       </div>
 
       {/* Control Buttons (CHECK 1 & CHECK 3) */}
-      <div className="absolute top-3 right-3 z-10 flex items-center space-x-1.5 font-mono">
+      <div className="absolute top-2.5 sm:top-3 right-2 sm:right-3 z-10 flex items-center space-x-1 sm:space-x-1.5 font-mono">
         <button
           onClick={highlightCashOutPath}
           disabled={pathLoading}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition ${
+          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10.5px] sm:text-xs font-bold flex items-center space-x-1 sm:space-x-1.5 transition cursor-pointer ${
             isPathHighlighted
               ? "bg-amber-500 text-slate-950 shadow-amber-glow"
               : "bg-amber-950/80 hover:bg-amber-900 border border-amber-600 text-amber-300"
           }`}
           title="Highlight Shortest Path to Cash-Out"
         >
-          <Route className="w-3.5 h-3.5" />
-          <span>{pathLoading ? "Tracing..." : "Shortest Path to Cash-Out"}</span>
+          <Route className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+          <span className="hidden sm:inline">{pathLoading ? "Tracing..." : "Shortest Path to Cash-Out"}</span>
+          <span className="sm:hidden">{pathLoading ? "..." : "Cash-Out"}</span>
         </button>
 
         <button
           onClick={() => handleZoom("in")}
-          className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition"
+          className="p-1 sm:p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition cursor-pointer"
           title="Zoom In"
         >
-          <ZoomIn className="w-3.5 h-3.5" />
+          <ZoomIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
         </button>
 
         <button
           onClick={() => handleZoom("out")}
-          className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition"
+          className="p-1 sm:p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition cursor-pointer"
           title="Zoom Out"
         >
-          <ZoomOut className="w-3.5 h-3.5" />
+          <ZoomOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
         </button>
 
         <button
           onClick={resetLayout}
-          className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition"
+          className="p-1 sm:p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition cursor-pointer"
           title="Reset Layout & Fit View"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
         </button>
       </div>
 
@@ -369,7 +371,7 @@ export function KnowledgeGraph({ actorId = "phantom-krypt", caseId = "1" }: Know
 
       {/* Node Details Side Panel (CHECK 2) */}
       {selectedNode && (
-        <div className="absolute top-14 right-3 z-20 w-80 bg-[#0e1626]/95 backdrop-blur-xl border border-cyan-500/40 rounded-xl p-4 shadow-2xl font-mono text-xs text-slate-200 animate-in fade-in slide-in-from-right-4 duration-200">
+        <div className="absolute top-12 sm:top-14 right-2 sm:right-3 left-2 sm:left-auto w-auto sm:w-80 max-w-[calc(100%-1rem)] bg-[#0e1626]/95 backdrop-blur-xl border border-cyan-500/40 rounded-xl p-3 sm:p-4 shadow-2xl font-mono text-xs text-slate-200 z-30 animate-in fade-in slide-in-from-right-4 duration-200">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
             <div className="flex items-center space-x-2">
               <Shield className="w-4 h-4 text-cyan-400" />
@@ -438,42 +440,42 @@ export function KnowledgeGraph({ actorId = "phantom-krypt", caseId = "1" }: Know
       )}
 
       {/* Bottom Legend */}
-      <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between px-3.5 py-2 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[10px] font-mono">
-        <div className="flex items-center space-x-3 flex-wrap">
+      <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 right-2 sm:right-3 z-10 flex items-center justify-between px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[9px] sm:text-[10px] font-mono gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
           <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-rose-500 shrink-0"></span>
             <span className="text-slate-300">Alias</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-purple-500 shrink-0"></span>
             <span className="text-slate-300">PGP Key</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
             <span className="text-slate-300">Wallet</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-amber-500 shrink-0"></span>
             <span className="text-slate-300">Document</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-indigo-400 shrink-0"></span>
             <span className="text-slate-300">Clearnet</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-400"></span>
-            <span className="text-slate-300">Cash-Out Exchange</span>
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-green-400 shrink-0"></span>
+            <span className="text-slate-300">Cash-Out</span>
           </div>
         </div>
 
         {selectedNode ? (
-          <div className="text-cyan-400 font-bold flex items-center space-x-1">
-            <span>SELECTED:</span>
-            <span className="text-white">{selectedNode.label || selectedNode.id}</span>
+          <div className="text-cyan-400 font-bold flex items-center space-x-1 shrink-0">
+            <span className="hidden sm:inline">SELECTED:</span>
+            <span className="text-white truncate max-w-[100px] sm:max-w-[160px]">{selectedNode.label || selectedNode.id}</span>
             <span className="text-slate-500">[{selectedNode.type}]</span>
           </div>
         ) : (
-          <span className="text-slate-500 hidden sm:inline">Tap node to inspect connections</span>
+          <span className="text-slate-500 hidden md:inline shrink-0">Tap node to inspect connections</span>
         )}
       </div>
     </div>

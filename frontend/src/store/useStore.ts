@@ -41,6 +41,14 @@ interface AppState {
   alerts: AlertMessage[];
   addAlert: (alert: Omit<AlertMessage, 'id' | 'timestamp'>) => void;
   clearAlerts: () => void;
+
+  // Global modals
+  isAiCopilotOpen: boolean;
+  setIsAiCopilotOpen: (open: boolean) => void;
+  isIngestOpen: boolean;
+  setIsIngestOpen: (open: boolean) => void;
+  isSubpoenaOpen: boolean;
+  setIsSubpoenaOpen: (open: boolean) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -111,4 +119,11 @@ export const useStore = create<AppState>((set) => ({
       ],
     })),
   clearAlerts: () => set({ alerts: [] }),
+
+  isAiCopilotOpen: false,
+  setIsAiCopilotOpen: (open) => set({ isAiCopilotOpen: open }),
+  isIngestOpen: false,
+  setIsIngestOpen: (open) => set({ isIngestOpen: open }),
+  isSubpoenaOpen: false,
+  setIsSubpoenaOpen: (open) => set({ isSubpoenaOpen: open }),
 }));

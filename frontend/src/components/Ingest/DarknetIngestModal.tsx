@@ -156,27 +156,27 @@ Telegram: @vl_operator`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-200">
       <div
-        className="w-full max-w-3xl bg-[#090f1d] border border-cyan-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-sans select-none animate-in zoom-in-95 duration-200"
+        className="w-full max-w-3xl max-h-[95vh] bg-[#0a0f1d] border border-cyan-500/40 rounded-2xl shadow-2xl overflow-hidden font-sans select-none flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="px-6 py-4 bg-[#0d162a] border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-400 flex items-center justify-center shadow-glow-cyan">
-              <UploadCloud className="w-5 h-5 text-cyan-400 animate-pulse" />
+        {/* Modal Header */}
+        <div className="px-3.5 sm:px-6 py-3 sm:py-4 bg-[#0d162a] border-b border-slate-800 flex items-center justify-between shrink-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3">
+            <div className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-600/30 border border-purple-400 flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.35)] shrink-0">
+              <UploadCloud className="w-4 sm:w-5 h-4 sm:h-5 text-purple-400" />
             </div>
             <div>
-              <div className="flex items-center space-x-2 font-mono">
-                <span className="font-bold text-white text-sm tracking-wider">
+              <div className="flex items-center space-x-1.5 sm:space-x-2 font-mono">
+                <span className="font-bold text-white text-xs sm:text-sm tracking-wider">
                   DARK WEB INGESTION & LEAK EXTRACTOR
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-red-950 text-red-300 border border-red-800">
-                  MODULE A / C RECON
+                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded bg-red-950 text-red-300 border border-red-800">
+                  MODULE A / C
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">
+              <p className="text-[10px] sm:text-xs text-slate-400 font-mono mt-0.5 hidden sm:block">
                 Paste raw darknet forum dumps, ransom notes, or .onion mirror text for autonomous entity de-anonymization
               </p>
             </div>
@@ -186,27 +186,27 @@ Telegram: @vl_operator`;
             onClick={onClose}
             className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto font-mono">
+        <div className="p-3.5 sm:p-6 space-y-3 sm:space-y-4 max-h-[75vh] overflow-y-auto font-mono">
           {/* Quick Pre-loads */}
-          <div className="flex flex-wrap items-center justify-between gap-2 bg-[#060a14] p-2.5 rounded-xl border border-slate-800 text-xs">
-            <span className="text-slate-400 text-[11px]">Load Sample Test Feeds:</span>
-            <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 bg-[#060a14] p-2 sm:p-2.5 rounded-xl border border-slate-800 text-xs">
+            <span className="text-slate-400 text-[10px] sm:text-[11px]">Load Sample Test Feeds:</span>
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
               <button
                 onClick={() => handleLoadSample('dread')}
-                className="px-3 py-1 rounded-lg bg-red-950/60 hover:bg-red-900/80 border border-red-800 text-red-300 text-[11px] transition cursor-pointer"
+                className="px-2.5 sm:px-3 py-1 rounded-lg bg-red-950/60 hover:bg-red-900/80 border border-red-800 text-red-300 text-[10px] sm:text-[11px] transition cursor-pointer truncate"
               >
-                ⚠️ Dread Ransom Notice (Phantom-Krypt)
+                ⚠️ Dread Notice
               </button>
               <button
                 onClick={() => handleLoadSample('breachforums')}
-                className="px-3 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900/80 border border-amber-800 text-amber-300 text-[11px] transition cursor-pointer"
+                className="px-2.5 sm:px-3 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900/80 border border-amber-800 text-amber-300 text-[10px] sm:text-[11px] transition cursor-pointer truncate"
               >
-                💾 BreachForums Dump (Void-Locker)
+                💾 BreachForums Dump
               </button>
             </div>
           </div>

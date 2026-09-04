@@ -25,7 +25,8 @@ function decodeJwt(token: string) {
 }
 
 export const Navbar: React.FC = () => {
-  const { user, logout, alerts, mobileMenuOpen, setMobileMenuOpen } = useStore();
+  const store = useStore();
+  const { user, logout, alerts, mobileMenuOpen, setMobileMenuOpen } = store;
   const [torOnline, setTorOnline] = useState(true);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [showTunnelModal, setShowTunnelModal] = useState(false);
@@ -422,12 +423,17 @@ export const Navbar: React.FC = () => {
 
       {/* Autonomous AI Copilot Drawer */}
       <SpecterAiCopilot
-        isOpen={showAiCopilot}
-        onClose={() => setShowAiCopilot(false)}
+        isOpen={showAiCopilot || store.isAiCopilotOpen}
+        onClose={() => {
+          setShowAiCopilot(false);
+          store.setIsAiCopilotOpen(false);
+        }}
         onTriggerAction={(actionId) => {
           setShowAiCopilot(false);
+          store.setIsAiCopilotOpen(false);
           if (actionId === 'open_subpoena' || actionId === 'open_subpoena_exchange') {
             setShowSubpoenaModal(true);
+            store.setIsSubpoenaOpen(true);
           } else if (actionId === 'view_crypto') {
             window.location.href = '/crypto';
           } else if (actionId === 'view_map') {
@@ -442,14 +448,20 @@ export const Navbar: React.FC = () => {
 
       {/* Darknet Ingest Modal */}
       <DarknetIngestModal
-        isOpen={showIngestModal}
-        onClose={() => setShowIngestModal(false)}
+        isOpen={showIngestModal || store.isIngestOpen}
+        onClose={() => {
+          setShowIngestModal(false);
+          store.setIsIngestOpen(false);
+        }}
       />
 
       {/* Section 91 / BSA 2023 Subpoena Generator */}
       <LegalSubpoenaModal
-        isOpen={showSubpoenaModal}
-        onClose={() => setShowSubpoenaModal(false)}
+        isOpen={showSubpoenaModal || store.isSubpoenaOpen}
+        onClose={() => {
+          setShowSubpoenaModal(false);
+          store.setIsSubpoenaOpen(false);
+        }}
       />
     </header>
   );

@@ -305,19 +305,19 @@ export const GeoMap: React.FC = () => {
       {/* Map Header Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3 shrink-0">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0">
             <Globe2 className="w-4 h-4 text-cyan-400 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="font-mono font-bold text-white text-sm tracking-wide">
-                GEOSPATIAL ATTRIBUTION & PHYSICAL INFRASTRUCTURE MAP
+              <h3 className="font-mono font-bold text-white text-xs sm:text-sm tracking-wide">
+                GEOSPATIAL ATTRIBUTION MAP
               </h3>
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
-                LIVE TELEMETRY
+              <span className="text-[9px] font-mono px-1.5 sm:px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                LIVE
               </span>
             </div>
-            <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+            <p className="text-[10px] sm:text-[11px] font-mono text-slate-400 mt-0.5 hidden sm:block">
               Correlating Tor egress relays, VPS de-cloaked origins, ISP autonomous systems, and off-ramps
             </p>
           </div>
@@ -386,29 +386,29 @@ export const GeoMap: React.FC = () => {
         <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
         {/* Floating Quick Legend */}
-        <div className="absolute bottom-3 left-3 z-[400] bg-[#0b1322]/90 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-800 text-[10px] font-mono shadow-xl flex flex-wrap items-center gap-3">
+        <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 z-[400] bg-[#0b1322]/90 backdrop-blur-md px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-slate-800 text-[9px] sm:text-[10px] font-mono shadow-xl flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 bg-red-500 rounded-full inline-block shadow-[0_0_8px_#ef4444]"></span>
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 bg-red-500 rounded-full inline-block shadow-[0_0_8px_#ef4444]"></span>
             <span className="text-red-300 font-bold">De-cloaked Origin</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full inline-block shadow-[0_0_8px_#22c55e]"></span>
-            <span className="text-slate-300">Tor Guard</span>
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 bg-emerald-400 rounded-full inline-block shadow-[0_0_8px_#22c55e]"></span>
+            <span className="text-slate-300">Guard</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 bg-cyan-400 rounded-full inline-block shadow-[0_0_8px_#06b6d4]"></span>
-            <span className="text-slate-300">Tor Exit Relay</span>
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 bg-cyan-400 rounded-full inline-block shadow-[0_0_8px_#06b6d4]"></span>
+            <span className="text-slate-300">Exit Relay</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 bg-amber-400 rounded-full inline-block shadow-[0_0_8px_#f59e0b]"></span>
-            <span className="text-slate-300">Financial Off-ramp</span>
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 bg-amber-400 rounded-full inline-block shadow-[0_0_8px_#f59e0b]"></span>
+            <span className="text-slate-300">Off-ramp</span>
           </div>
         </div>
 
         {/* Floating Status Pill */}
-        <div className="absolute top-3 right-3 z-[400] bg-[#0b1322]/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-800 text-[10px] font-mono text-slate-300 flex items-center space-x-1.5">
+        <div className="absolute top-2 sm:top-3 right-2 sm:right-3 z-[400] bg-[#0b1322]/90 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-lg border border-slate-800 text-[9px] sm:text-[10px] font-mono text-slate-300 flex items-center space-x-1 sm:space-x-1.5">
           <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
-          <span>Active Target: <strong className="text-cyan-400 uppercase">{selectedTarget}</strong></span>
+          <span>Target: <strong className="text-cyan-400 uppercase">{selectedTarget}</strong></span>
         </div>
       </div>
     </div>

@@ -83,24 +83,24 @@ export const MixerPeelChainExplorer: React.FC<MixerPeelChainExplorerProps> = ({
   ];
 
   return (
-    <div className="bg-[#0b1220] rounded-xl border border-cyan-500/30 p-5 space-y-5 font-mono select-none shadow-2xl">
+    <div className="bg-[#0b1220] rounded-xl border border-cyan-500/30 p-3.5 sm:p-5 space-y-4 sm:space-y-5 font-mono select-none shadow-2xl">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400 flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-            <Coins className="w-5 h-5 text-purple-400" />
+      <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 border-b border-slate-800 pb-3 sm:pb-4">
+        <div className="flex items-center space-x-2.5 sm:space-x-3">
+          <div className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl bg-purple-500/20 border border-purple-400 flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.3)] shrink-0">
+            <Coins className="w-4 sm:w-5 h-4 sm:h-5 text-purple-400" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <h3 className="font-bold text-white text-sm tracking-wide">
-                AUTONOMOUS COINJOIN MIXER & PEEL-CHAIN UNRAVELER (MODULE D)
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <h3 className="font-bold text-white text-xs sm:text-sm tracking-wide">
+                AUTONOMOUS COINJOIN MIXER & PEEL-CHAIN (MODULE D)
               </h3>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 font-bold">
-                CIOH HEURISTICS
+              <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 font-bold shrink-0">
+                CIOH
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Demasking multi-hop CoinJoin obfuscation through Common Input Ownership & Change Output heuristics
+            <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
+              Demasking multi-hop CoinJoin obfuscation through Common Input Ownership heuristics
             </p>
           </div>
         </div>
@@ -162,7 +162,7 @@ export const MixerPeelChainExplorer: React.FC<MixerPeelChainExplorerProps> = ({
           Sequential Peel-Chain Propagation (Tx: {actor.cryptoEvidence.txHash.substring(0, 18)}...)
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
           {steps.map((s) => {
             const isSelected = activeStep === s.step;
             const isTainted = s.taint >= taintThreshold;

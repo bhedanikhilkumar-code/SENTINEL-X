@@ -106,17 +106,17 @@ export const WalletHopChain: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-1 sm:flex-initial items-center space-x-2 w-full sm:w-auto">
           <input
             type="text"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            className="w-64 bg-[#0b0f19] border border-cyber-border rounded px-3 py-1 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+            className="flex-1 sm:w-64 bg-[#0b0f19] border border-cyber-border rounded px-3 py-1.5 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
           />
           <button
             onClick={handleTrace}
             disabled={loading}
-            className="px-3 py-1 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-xs shadow-glow-cyan transition-colors flex items-center space-x-1 cursor-pointer"
+            className="px-3 py-1.5 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-xs shadow-glow-cyan transition-colors flex items-center space-x-1 cursor-pointer shrink-0"
           >
             <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
             <span>Trace Hops</span>

@@ -191,10 +191,11 @@ export function GeoLeafletMap({ actorId = "phantom-krypt" }: GeoLeafletMapProps)
 
   return (
     <div className="relative w-full h-full min-h-[380px] bg-[#070a13] rounded-2xl border border-cyan-500/20 overflow-hidden shadow-cyber-glow">
-      <div className="absolute top-3 left-3 z-[400] flex items-center space-x-2 px-3 py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-xs font-mono">
-        <Globe2 className="w-4 h-4 text-cyan-400 animate-pulse" />
-        <span className="font-bold text-slate-100">GEOSPATIAL THREAT TRACE</span>
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800">
+      <div className="absolute top-2.5 sm:top-3 left-2 sm:left-3 z-[400] flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[11px] sm:text-xs font-mono">
+        <Globe2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse shrink-0" />
+        <span className="font-bold text-slate-100 hidden sm:inline">GEOSPATIAL THREAT TRACE</span>
+        <span className="font-bold text-slate-100 sm:hidden">GEO TRACE</span>
+        <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800 shrink-0">
           ● {actor.status}
         </span>
       </div>
@@ -202,18 +203,18 @@ export function GeoLeafletMap({ actorId = "phantom-krypt" }: GeoLeafletMapProps)
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
       {/* Map Legend */}
-      <div className="absolute bottom-3 left-3 z-[400] flex flex-wrap items-center gap-2 sm:gap-3 px-3 py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[10px] font-mono">
+      <div className="absolute bottom-2.5 sm:bottom-3 left-2 sm:left-3 z-[400] flex flex-wrap items-center gap-1.5 sm:gap-3 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-[#0b1322]/90 backdrop-blur-md rounded-xl border border-slate-800 text-[9px] sm:text-[10px] font-mono">
         <div className="flex items-center space-x-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <span className="text-slate-300">Tor Guard</span>
+          <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+          <span className="text-slate-300">Guard</span>
         </div>
         <div className="flex items-center space-x-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-          <span className="text-slate-300">Tor Exit Relay</span>
+          <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+          <span className="text-slate-300">Exit Relay</span>
         </div>
         <div className="flex items-center space-x-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]"></span>
-          <span className="text-rose-400 font-bold">{actor.location.city} (Target C2)</span>
+          <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e] shrink-0"></span>
+          <span className="text-rose-400 font-bold">{actor.location.city} (C2)</span>
         </div>
       </div>
     </div>
