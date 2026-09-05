@@ -136,15 +136,16 @@ export const GeoMap: React.FC = () => {
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // 3. Tile Layer
+    // 3. Tile Layer (ESRI World Dark Gray for tactical dark mode; OSM for standard)
     const tileUrl =
       tileMode === 'dark'
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
         : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
     const tileLayer = L.tileLayer(tileUrl, {
+      maxNativeZoom: tileMode === 'dark' ? 16 : 19,
       maxZoom: 19,
-      subdomains: tileMode === 'dark' ? 'abcd' : 'abc',
+      subdomains: tileMode === 'dark' ? '' : 'abc',
     });
     tileLayer.addTo(map);
 

@@ -45,11 +45,14 @@ export function GeoLeafletMap({ actorId = "phantom-krypt" }: GeoLeafletMapProps)
 
     L.control.zoom({ position: "bottomright" }).addTo(map);
 
-    // 3. CartoDB Dark Matter tiles
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 19,
-      subdomains: "abcd",
-    }).addTo(map);
+    // 3. ESRI Dark Gray Canvas tiles (Clean dark basemap, no API key watermark)
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxNativeZoom: 16,
+        maxZoom: 19,
+      }
+    ).addTo(map);
 
     const bounds: L.LatLngExpression[] = [];
 
